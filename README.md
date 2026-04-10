@@ -25,11 +25,11 @@ cp example.env .env
 docker compose up -d --build
 
 # Load documents for the knowledge agent
-docker exec -it agno-demo-api python -m agents.knowledge.scripts.load_knowledge
+docker exec -it demo-os-api python -m agents.knowledge.scripts.load_knowledge
 
 # Load SaaS data for Dash
-docker exec -it agno-demo-api python -m agents.dash.scripts.load_data
-docker exec -it agno-demo-api python -m agents.dash.scripts.load_knowledge
+docker exec -it demo-os-api python -m agents.dash.scripts.load_data
+docker exec -it demo-os-api python -m agents.dash.scripts.load_knowledge
 ```
 
 Confirm the system is running at [http://localhost:8000/docs](http://localhost:8000/docs).
