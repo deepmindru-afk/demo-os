@@ -6,7 +6,7 @@ This is a reference implementation for building production agentic software with
 
 This codebase demonstrates two things:
 
-1. **You can run a near-unlimited number of agents in a single service.** 10 agents, 11 teams, and 4 workflows all run in one process — scale the number of replicas based on load, not the number of agents.
+1. **You can run a near-unlimited number of agents in a single service.** 10 agents, 11 teams, and 4 workflows all run in one process. Scale the number of replicas based on load, not the number of agents.
 2. **You don't need complex architecture to run agentic software.** There's no event queues, no message bus, no custom infrastructure. It's a FastAPI app with a PostgreSQL database.
 
 Agentic software is just software. Using systems engineering principles, you can build production-grade agent systems with Agno, the same way you'd build any other service.
