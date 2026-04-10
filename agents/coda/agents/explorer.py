@@ -98,23 +98,25 @@ explorer = Agent(
             enable_run_shell=False,
         ),
         GitTools(base_dir=str(REPOS_DIR), read_only=True),
-        *get_github_tools([
-            # PR review
-            "get_pull_request",
-            "get_pull_requests",
-            "get_pull_request_changes",
-            "get_pull_request_comments",
-            "get_pull_request_with_details",
-            "create_pull_request_comment",
-            # Issues
-            "get_issue",
-            "list_issues",
-            "list_issue_comments",
-            "comment_on_issue",
-            # Branches & search
-            "list_branches",
-            "search_code",
-        ]),
+        *get_github_tools(
+            [
+                # PR review
+                "get_pull_request",
+                "get_pull_requests",
+                "get_pull_request_changes",
+                "get_pull_request_comments",
+                "get_pull_request_with_details",
+                "create_pull_request_comment",
+                # Issues
+                "get_issue",
+                "list_issues",
+                "list_issue_comments",
+                "comment_on_issue",
+                # Branches & search
+                "list_branches",
+                "search_code",
+            ]
+        ),
         ReasoningTools(),
     ],
     add_datetime_to_context=True,

@@ -126,26 +126,28 @@ triager = Agent(
             enable_run_shell=False,
         ),
         GitTools(base_dir=str(REPOS_DIR), read_only=True),
-        *get_github_tools([
-            # Issue management (full)
-            "list_issues",
-            "get_issue",
-            "create_issue",
-            "comment_on_issue",
-            "close_issue",
-            "reopen_issue",
-            "assign_issue",
-            "label_issue",
-            "edit_issue",
-            "list_issue_comments",
-            "search_issues_and_prs",
-            # PR reading (cross-reference)
-            "get_pull_request",
-            "get_pull_requests",
-            "get_pull_request_with_details",
-            # Code search
-            "search_code",
-        ]),
+        *get_github_tools(
+            [
+                # Issue management (full)
+                "list_issues",
+                "get_issue",
+                "create_issue",
+                "comment_on_issue",
+                "close_issue",
+                "reopen_issue",
+                "assign_issue",
+                "label_issue",
+                "edit_issue",
+                "list_issue_comments",
+                "search_issues_and_prs",
+                # PR reading (cross-reference)
+                "get_pull_request",
+                "get_pull_requests",
+                "get_pull_request_with_details",
+                # Code search
+                "search_code",
+            ]
+        ),
         ReasoningTools(),
     ],
     add_datetime_to_context=True,

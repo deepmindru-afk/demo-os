@@ -105,19 +105,21 @@ planner = Agent(
             enable_run_shell=False,
         ),
         GitTools(base_dir=str(REPOS_DIR), read_only=True),
-        *get_github_tools([
-            # Issue creation and management
-            "list_issues",
-            "get_issue",
-            "create_issue",
-            "label_issue",
-            "list_issue_comments",
-            "search_issues_and_prs",
-            # PR reading (cross-reference)
-            "get_pull_requests",
-            # Code search
-            "search_code",
-        ]),
+        *get_github_tools(
+            [
+                # Issue creation and management
+                "list_issues",
+                "get_issue",
+                "create_issue",
+                "label_issue",
+                "list_issue_comments",
+                "search_issues_and_prs",
+                # PR reading (cross-reference)
+                "get_pull_requests",
+                # Code search
+                "search_code",
+            ]
+        ),
         ReasoningTools(),
     ],
     add_datetime_to_context=True,

@@ -75,17 +75,19 @@ coder = Agent(
     tools=[
         CodingTools(base_dir=REPOS_DIR, all=True, shell_timeout=120),
         GitTools(base_dir=str(REPOS_DIR)),
-        *get_github_tools([
-            "get_pull_request",
-            "get_pull_requests",
-            "get_pull_request_changes",
-            "get_pull_request_comments",
-            "create_pull_request",
-            "get_issue",
-            "list_issues",
-            "create_issue",
-            "comment_on_issue",
-        ]),
+        *get_github_tools(
+            [
+                "get_pull_request",
+                "get_pull_requests",
+                "get_pull_request_changes",
+                "get_pull_request_comments",
+                "create_pull_request",
+                "get_issue",
+                "list_issues",
+                "create_issue",
+                "comment_on_issue",
+            ]
+        ),
         ReasoningTools(),
     ],
     add_datetime_to_context=True,

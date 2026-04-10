@@ -1,11 +1,10 @@
 """Morning Brief - Daily parallel briefing workflow."""
 
 from agno.agent import Agent
-from agno.tools.parallel import ParallelTools
 from agno.workflow import Step, Workflow
 from agno.workflow.parallel import Parallel
 
-from app.settings import MODEL, agent_db
+from app.settings import MODEL, agent_db, get_parallel_tools
 from utils.exa import get_exa_mcp_tools
 from workflows.morning_brief.instructions import (
     CALENDAR_INSTRUCTIONS,
@@ -35,7 +34,7 @@ news_agent = Agent(
     name="News Scanner",
     model=MODEL,
     db=agent_db,
-    tools=[ParallelTools(enable_extract=False), *get_exa_mcp_tools()],
+    tools=[*get_parallel_tools(enable_extract=False), *get_exa_mcp_tools()],
     instructions=NEWS_INSTRUCTIONS,
 )
 

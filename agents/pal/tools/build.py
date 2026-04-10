@@ -3,7 +3,6 @@
 from agno.knowledge import Knowledge
 from agno.tools.file import FileTools
 from agno.tools.mcp import MCPTools
-from agno.tools.parallel import ParallelTools
 from agno.tools.sql import SQLTools
 
 from agents.pal.config import (
@@ -16,6 +15,7 @@ from agents.pal.tools.git import create_sync_tools
 from agents.pal.tools.ingest import create_ingest_tools
 from agents.pal.tools.knowledge import create_update_knowledge
 from agents.pal.tools.wiki import create_wiki_tools
+from app.settings import get_parallel_tools
 
 RAW_DIR = PAL_CONTEXT_DIR / "raw"
 WIKI_DIR = PAL_CONTEXT_DIR / "wiki"
@@ -53,7 +53,7 @@ def build_researcher_tools(knowledge: Knowledge) -> list:
     ingest_url, ingest_text, read_manifest, _ = create_ingest_tools(RAW_DIR)
     return [
         FileTools(base_dir=PAL_CONTEXT_DIR, enable_delete_file=False),
-        ParallelTools(),
+        *get_parallel_tools(),
         create_update_knowledge(knowledge),
         ingest_url,
         ingest_text,

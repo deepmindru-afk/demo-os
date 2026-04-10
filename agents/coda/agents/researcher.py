@@ -15,10 +15,10 @@ from typing import Optional
 
 from agno.agent import Agent
 from agno.learn import LearnedKnowledgeConfig, LearningMachine, LearningMode
-from agno.tools.parallel import ParallelTools
 from agno.tools.reasoning import ReasoningTools
 
 from agents.coda.settings import MODEL, agent_db, coda_learnings
+from app.settings import get_parallel_tools
 
 # ---------------------------------------------------------------------------
 # Instructions
@@ -84,7 +84,7 @@ if getenv("PARALLEL_API_KEY"):
         ),
         add_learnings_to_context=True,
         tools=[
-            ParallelTools(),
+            *get_parallel_tools(),
             ReasoningTools(),
         ],
         add_datetime_to_context=True,

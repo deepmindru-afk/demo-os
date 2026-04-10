@@ -1,8 +1,7 @@
 from agno.agent import Agent
 from agno.team import Team, TeamMode
-from agno.tools.parallel import ParallelTools
 
-from app.settings import MODEL, agent_db
+from app.settings import MODEL, agent_db, get_parallel_tools
 from teams.research.instructions import (
     ANALYST_INSTRUCTIONS,
     BROADCAST_INSTRUCTIONS,
@@ -21,7 +20,7 @@ analyst = Agent(
     role="Data analysis, market sizing, trends, quantitative research",
     model=MODEL,
     db=agent_db,
-    tools=[ParallelTools(), *get_exa_mcp_tools("web_search_exa")],
+    tools=[*get_parallel_tools(), *get_exa_mcp_tools("web_search_exa")],
     instructions=ANALYST_INSTRUCTIONS,
     add_datetime_to_context=True,
     markdown=True,
@@ -33,7 +32,7 @@ investigator = Agent(
     role="Company/people research, competitive intelligence",
     model=MODEL,
     db=agent_db,
-    tools=[ParallelTools(), *get_exa_mcp_tools("web_search_exa,company_research_exa,people_search_exa")],
+    tools=[*get_parallel_tools(), *get_exa_mcp_tools("web_search_exa,company_research_exa,people_search_exa")],
     instructions=INVESTIGATOR_INSTRUCTIONS,
     add_datetime_to_context=True,
     markdown=True,

@@ -1,10 +1,9 @@
 from agno.agent import Agent
-from agno.tools.parallel import ParallelTools
 from agno.workflow import Step, Workflow
 from agno.workflow.loop import Loop
 from agno.workflow.parallel import Parallel
 
-from app.settings import MODEL, agent_db
+from app.settings import MODEL, agent_db, get_parallel_tools
 from utils.exa import get_exa_mcp_tools
 from workflows.content_pipeline.instructions import (
     EDITOR_INSTRUCTIONS,
@@ -17,7 +16,7 @@ researcher = Agent(
     name="Content Researcher",
     model=MODEL,
     db=agent_db,
-    tools=[ParallelTools(), *get_exa_mcp_tools()],
+    tools=[*get_parallel_tools(), *get_exa_mcp_tools()],
     instructions=RESEARCHER_INSTRUCTIONS,
 )
 
