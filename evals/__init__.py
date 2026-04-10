@@ -1,33 +1,31 @@
 """
-Agno Demo Evaluations
-=====================
+AgentOS Evaluations
+===================
 
-Eval framework for testing agent capabilities across the demo.
+Eval framework built on Agno evals for testing all agents, teams, and workflows.
+
+Two layers:
+    - Smoke tests: fast pattern-matching assertions, no LLM cost
+    - Agno evals: LLM-judged using AgentAsJudgeEval and AccuracyEval
 
 Usage:
-    python -m evals
-    python -m evals --category security
-    python -m evals --verbose
+    python -m evals smoke                    # Fast smoke tests
+    python -m evals                          # Agno eval suite
+    python -m evals --category security      # Single category
+    python -m evals improve --entity dash    # Auto-improvement data
 """
-
-from dataclasses import dataclass
 
 from agno.models.openai import OpenAIResponses
 
 JUDGE_MODEL = OpenAIResponses(id="gpt-5.4")
 
-
-@dataclass
-class TestCase:
-    """A test case for per-agent evaluations."""
-
-    question: str
-    expected_strings: list[str]
-    expected_tools: list[str]
-    category: str
-
-
-CATEGORIES: dict[str, dict] = {
-    "security": {"type": "judge_binary", "module": "evals.cases.security"},
-    "accuracy": {"type": "accuracy", "module": "evals.cases.accuracy"},
+CATEGORIES = {
+    "security": {
+        "type": "judge_binary",
+        "module": "evals.cases.security",
+    },
+    "accuracy": {
+        "type": "accuracy",
+        "module": "evals.cases.accuracy",
+    },
 }
