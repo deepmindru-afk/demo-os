@@ -14,7 +14,6 @@ Usage (called BY Claude Code):
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from evals.client import AgentOSClient
@@ -122,9 +121,7 @@ def _read_file(path: str) -> str:
         return f"[FILE NOT FOUND: {abs_path}]"
 
 
-def _get_smoke_results_for_entity(
-    client: AgentOSClient, entity_id: str
-) -> list[dict]:
+def _get_smoke_results_for_entity(client: AgentOSClient, entity_id: str) -> list[dict]:
     """Run smoke tests for a specific entity and return results."""
     return run_smoke_tests(client, entity=entity_id)
 
@@ -170,7 +167,7 @@ def collect_improvement_data(
     # Format smoke results
     smoke_lines = []
     for r in smoke_results:
-        line = f"{r['id']}  {r['entity_id']}  \"{r.get('name', '')}\"  {r['status']}"
+        line = f'{r["id"]}  {r["entity_id"]}  "{r.get("name", "")}"  {r["status"]}'
         if r.get("reason"):
             line += f"  {r['reason']}"
         smoke_lines.append(line)
@@ -205,22 +202,26 @@ def collect_improvement_data(
         sections.extend(["", "--- DOCKER STDERR ---", logs.stderr])
 
     if instruction_path:
-        sections.extend([
-            "",
-            "=== INSTRUCTION FILE ===",
-            f"PATH: {instruction_path}",
-            "--- CONTENTS ---",
-            _read_file(instruction_path),
-        ])
+        sections.extend(
+            [
+                "",
+                "=== INSTRUCTION FILE ===",
+                f"PATH: {instruction_path}",
+                "--- CONTENTS ---",
+                _read_file(instruction_path),
+            ]
+        )
 
     if definition_path:
-        sections.extend([
-            "",
-            "=== AGENT DEFINITION ===",
-            f"PATH: {definition_path}",
-            "--- CONTENTS ---",
-            _read_file(definition_path),
-        ])
+        sections.extend(
+            [
+                "",
+                "=== AGENT DEFINITION ===",
+                f"PATH: {definition_path}",
+                "--- CONTENTS ---",
+                _read_file(definition_path),
+            ]
+        )
 
     sections.append("\n=== END ===")
 
@@ -249,15 +250,11 @@ def run_improve(
         print("=" * 60)
 
         for eid in sorted(failed_ids):
-            output = collect_improvement_data(
-                client, eid, project_root, docker_container
-            )
+            output = collect_improvement_data(client, eid, project_root, docker_container)
             print(output)
             print("\n" + "=" * 60 + "\n")
     elif entity_id:
-        output = collect_improvement_data(
-            client, entity_id, project_root, docker_container
-        )
+        output = collect_improvement_data(client, entity_id, project_root, docker_container)
         print(output)
     else:
         print("Usage: python -m evals improve --entity <id> | --failures")

@@ -227,10 +227,25 @@ python -m agents.dash.scripts.load_knowledge
 ./scripts/format.sh
 ./scripts/validate.sh
 
-# Run evals
+# Run evals — smoke tests (fast, no LLM cost)
+python -m evals smoke
+python -m evals smoke --group agents
+python -m evals smoke --group security
+python -m evals smoke --entity knowledge
+python -m evals smoke --verbose
+
+# Run evals — LLM-judged (deeper, costs money)
+python -m evals judge
+python -m evals judge --category security
+python -m evals judge --verbose
+
+# Run evals — backward compat
 python -m evals
 python -m evals --category security
-python -m evals --verbose
+
+# Auto-improvement loop (see evals/IMPROVE.md for full workflow)
+python -m evals improve --entity knowledge
+python -m evals improve --failures
 ```
 
 ## Environment Variables

@@ -37,11 +37,7 @@ class AgentOSClient:
         base_url: str | None = None,
         timeout: float = 120.0,
     ):
-        self.base_url = (
-            base_url
-            or os.environ.get("AGENTOS_URL")
-            or "http://localhost:8000"
-        ).rstrip("/")
+        self.base_url = (base_url or os.environ.get("AGENTOS_URL") or "http://localhost:8000").rstrip("/")
         self.timeout = timeout
         self.client = httpx.Client(timeout=timeout)
 

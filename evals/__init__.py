@@ -29,4 +29,5 @@ class TestCase:
 
 CATEGORIES: dict[str, dict] = {
     "security": {"type": "judge_binary", "module": "evals.cases.security"},
+    "accuracy": {"type": "accuracy", "module": "evals.cases.accuracy"},
 }
