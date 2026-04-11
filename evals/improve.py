@@ -10,106 +10,18 @@ Usage (called BY Claude Code):
     python -m evals improve --entity knowledge
     python -m evals improve --entity dash
     python -m evals improve --failures
+    python -m evals improve --entity knowledge --json
 """
 
 from __future__ import annotations
 
+import json as json_mod
 from pathlib import Path
 
 from evals.client import AgentOSClient
 from evals.docker import DockerLogCapture
+from evals.registry import ENTITIES
 from evals.smoke import run_smoke_tests
-
-INSTRUCTION_FILES: dict[str, str] = {
-    # Agents
-    "knowledge": "agents/knowledge/instructions.py",
-    "mcp": "agents/mcp/instructions.py",
-    "helpdesk": "agents/helpdesk/instructions.py",
-    "feedback": "agents/feedback/instructions.py",
-    "approvals": "agents/approvals/instructions.py",
-    "reasoner": "agents/reasoner/instructions.py",
-    "reporter": "agents/reporter/instructions.py",
-    "contacts": "agents/contacts/instructions.py",
-    "studio": "agents/studio/instructions.py",
-    "scheduler": "agents/scheduler/instructions.py",
-    # Teams
-    "pal": "agents/pal/instructions.py",
-    "dash": "agents/dash/instructions.py",
-    "coda": "agents/coda/instructions.py",
-    "research-coordinate": "teams/research/instructions.py",
-    "research-route": "teams/research/instructions.py",
-    "research-broadcast": "teams/research/instructions.py",
-    "research-tasks": "teams/research/instructions.py",
-    "investment-coordinate": "teams/investment/instructions.py",
-    "investment-route": "teams/investment/instructions.py",
-    "investment-broadcast": "teams/investment/instructions.py",
-    "investment-tasks": "teams/investment/instructions.py",
-    # Workflows
-    "morning-brief": "workflows/morning_brief/instructions.py",
-    "ai-research": "workflows/ai_research/instructions.py",
-    "content-pipeline": "workflows/content_pipeline/instructions.py",
-    "repo-walkthrough": "workflows/repo_walkthrough/instructions.py",
-}
-
-AGENT_DEFINITION_FILES: dict[str, str] = {
-    # Agents
-    "knowledge": "agents/knowledge/agent.py",
-    "mcp": "agents/mcp/agent.py",
-    "helpdesk": "agents/helpdesk/agent.py",
-    "feedback": "agents/feedback/agent.py",
-    "approvals": "agents/approvals/agent.py",
-    "reasoner": "agents/reasoner/agent.py",
-    "reporter": "agents/reporter/agent.py",
-    "contacts": "agents/contacts/agent.py",
-    "studio": "agents/studio/agent.py",
-    "scheduler": "agents/scheduler/agent.py",
-    # Teams
-    "pal": "agents/pal/team.py",
-    "dash": "agents/dash/team.py",
-    "coda": "agents/coda/team.py",
-    "research-coordinate": "teams/research/team.py",
-    "research-route": "teams/research/team.py",
-    "research-broadcast": "teams/research/team.py",
-    "research-tasks": "teams/research/team.py",
-    "investment-coordinate": "teams/investment/team.py",
-    "investment-route": "teams/investment/team.py",
-    "investment-broadcast": "teams/investment/team.py",
-    "investment-tasks": "teams/investment/team.py",
-    # Workflows
-    "morning-brief": "workflows/morning_brief/workflow.py",
-    "ai-research": "workflows/ai_research/workflow.py",
-    "content-pipeline": "workflows/content_pipeline/workflow.py",
-    "repo-walkthrough": "workflows/repo_walkthrough/workflow.py",
-}
-
-# Map entity_id to entity_type
-ENTITY_TYPES: dict[str, str] = {
-    "knowledge": "agent",
-    "mcp": "agent",
-    "helpdesk": "agent",
-    "feedback": "agent",
-    "approvals": "agent",
-    "reasoner": "agent",
-    "reporter": "agent",
-    "contacts": "agent",
-    "studio": "agent",
-    "scheduler": "agent",
-    "pal": "team",
-    "dash": "team",
-    "coda": "team",
-    "research-coordinate": "team",
-    "research-route": "team",
-    "research-broadcast": "team",
-    "research-tasks": "team",
-    "investment-coordinate": "team",
-    "investment-route": "team",
-    "investment-broadcast": "team",
-    "investment-tasks": "team",
-    "morning-brief": "workflow",
-    "ai-research": "workflow",
-    "content-pipeline": "workflow",
-    "repo-walkthrough": "workflow",
-}
 
 
 def _read_file(path: str) -> str:
@@ -133,10 +45,11 @@ def collect_improvement_data(
     docker_container: str = "agno-demo-api",
 ) -> str:
     """Collect all improvement data for a single entity. Returns formatted text."""
-    entity_type = ENTITY_TYPES.get(entity_id)
-    if not entity_type:
+    entity = ENTITIES.get(entity_id)
+    if not entity:
         return f"Unknown entity: {entity_id}"
 
+    entity_type = entity.type
     docker = DockerLogCapture(container=docker_container, project_root=project_root)
 
     # Run smoke tests for this entity
@@ -159,8 +72,8 @@ def collect_improvement_data(
     logs = docker.capture_since(mark)
 
     # Read instruction and agent definition files
-    instruction_rel = INSTRUCTION_FILES.get(entity_id, "")
-    definition_rel = AGENT_DEFINITION_FILES.get(entity_id, "")
+    instruction_rel = entity.instruction_file
+    definition_rel = entity.definition_file
     instruction_path = str(Path(project_root, instruction_rel).resolve()) if instruction_rel else ""
     definition_path = str(Path(project_root, definition_rel).resolve()) if definition_rel else ""
 
@@ -228,14 +141,66 @@ def collect_improvement_data(
     return "\n".join(sections)
 
 
+def collect_improvement_json(
+    client: AgentOSClient,
+    entity_id: str,
+    project_root: str = ".",
+    docker_container: str = "agno-demo-api",
+) -> dict:
+    """Collect improvement data as structured dict (for --json mode)."""
+    entity = ENTITIES.get(entity_id)
+    if not entity:
+        return {"error": f"Unknown entity: {entity_id}"}
+
+    docker = DockerLogCapture(container=docker_container, project_root=project_root)
+    smoke_results = _get_smoke_results_for_entity(client, entity_id)
+
+    failing = [r for r in smoke_results if r["status"] == "FAIL"]
+    test_prompt = failing[0].get("prompt", "") if failing else None
+    if not test_prompt:
+        from evals.cases.smoke import all_smoke_tests
+
+        entity_tests = [t for t in all_smoke_tests() if t.entity_id == entity_id and t.group != "security"]
+        test_prompt = entity_tests[0].prompt if entity_tests else f"Hello, test for {entity_id}"
+
+    mark = docker.mark()
+    run_result = client.run(entity.type, entity_id, test_prompt)
+    logs = docker.capture_since(mark)
+
+    instruction_path = str(Path(project_root, entity.instruction_file).resolve())
+    definition_path = str(Path(project_root, entity.definition_file).resolve())
+
+    return {
+        "entity_id": entity_id,
+        "entity_type": entity.type,
+        "smoke_results": smoke_results,
+        "failing_tests": failing,
+        "run": {
+            "prompt": test_prompt,
+            "response": run_result.content or "",
+            "status_code": run_result.status_code,
+            "duration": run_result.duration,
+            "tool_calls": run_result.tool_calls,
+        },
+        "docker_logs": {"stdout": logs.stdout, "stderr": logs.stderr},
+        "files": {
+            "instructions": {"path": instruction_path, "content": _read_file(instruction_path)},
+            "definition": {"path": definition_path, "content": _read_file(definition_path)},
+        },
+    }
+
+
 def run_improve(
     client: AgentOSClient,
     entity_id: str | None = None,
     failures_only: bool = False,
     project_root: str = ".",
     docker_container: str = "agno-demo-api",
+    output_json: bool = False,
 ) -> None:
     """Main entry point for the improvement data collector."""
+    collector = collect_improvement_json if output_json else collect_improvement_data
+
     if failures_only:
         # Run full smoke suite, collect failures
         print("Running smoke tests to find failures...\n")
@@ -250,11 +215,17 @@ def run_improve(
         print("=" * 60)
 
         for eid in sorted(failed_ids):
-            output = collect_improvement_data(client, eid, project_root, docker_container)
-            print(output)
+            output = collector(client, eid, project_root, docker_container)
+            if output_json:
+                print(json_mod.dumps(output, indent=2))
+            else:
+                print(output)
             print("\n" + "=" * 60 + "\n")
     elif entity_id:
-        output = collect_improvement_data(client, entity_id, project_root, docker_container)
-        print(output)
+        output = collector(client, entity_id, project_root, docker_container)
+        if output_json:
+            print(json_mod.dumps(output, indent=2))
+        else:
+            print(output)
     else:
         print("Usage: python -m evals improve --entity <id> | --failures")

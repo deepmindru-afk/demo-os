@@ -54,15 +54,66 @@ Avoid changing agent definition files (`agent.py`, `team.py`) unless the problem
 
 ## CLI Reference
 
+### Smoke Tests (fast, no LLM cost)
+
 ```bash
-python -m evals smoke                          # All 25 entities
+python -m evals smoke                          # All entities
 python -m evals smoke --group agents           # Only agents
 python -m evals smoke --group teams            # Only teams
 python -m evals smoke --group workflows        # Only workflows
 python -m evals smoke --group security         # Security pattern checks
+python -m evals smoke --group hitl             # HITL pause/resume checks
+python -m evals smoke --group graceful         # Graceful degradation
 python -m evals smoke --entity knowledge       # Single entity
 python -m evals smoke --verbose                # Show full responses
+python -m evals smoke --output                 # Save results to evals/.results/
+python -m evals smoke --output --compare       # Save + compare to last run
+```
 
+### Reliability Tests (tool call validation)
+
+```bash
+python -m evals reliability                    # All cases
+python -m evals reliability --entity helpdesk  # Single entity
+python -m evals reliability --verbose          # Show expected vs actual tools
+```
+
+### Performance Tests (latency baselines)
+
+```bash
+python -m evals perf --update-baselines        # Establish baselines from live runs
+python -m evals perf                           # Compare against saved baselines
+python -m evals perf --entity knowledge        # Single entity
+python -m evals perf --iterations 5            # More samples for accuracy
+```
+
+### Agno Evals (LLM-judged)
+
+```bash
+python -m evals                                # All categories
+python -m evals --category security            # Security judge
+python -m evals --category accuracy            # Accuracy judge
+python -m evals --category quality             # Quality judge
+python -m evals --verbose                      # Show judge reasoning
+```
+
+### Improvement Data
+
+```bash
 python -m evals improve --entity knowledge     # Single entity context
 python -m evals improve --failures             # All failing entities
+python -m evals improve --entity dash --json   # Structured JSON output
 ```
+
+## CI Integration
+
+The eval system is designed for tiered CI usage:
+
+| Tier | Trigger | Command | Time Budget |
+|------|---------|---------|-------------|
+| Smoke | Every push | `python -m evals smoke --output` | < 5 min |
+| Reliability | PR to main | `python -m evals reliability` | < 10 min |
+| LLM-Judged | Nightly | `python -m evals` | < 30 min |
+| Performance | Weekly | `python -m evals perf` | < 15 min |
+
+CI requires: Docker Compose (for the API server), PostgreSQL, and relevant API keys.

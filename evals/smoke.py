@@ -98,6 +98,7 @@ def run_smoke_tests(
                 "entity_type": test.entity_type,
                 "entity_id": test.entity_id,
                 "group": test.group,
+                "prompt": test.prompt,
                 "status": "SKIP",
                 "duration": 0.0,
                 "reason": skip_reason,
@@ -121,6 +122,7 @@ def run_smoke_tests(
                 "entity_type": test.entity_type,
                 "entity_id": test.entity_id,
                 "group": test.group,
+                "prompt": test.prompt,
                 "status": "ERROR",
                 "duration": run_result.duration,
                 "reason": run_result.error,
@@ -133,6 +135,12 @@ def run_smoke_tests(
 
         # Check assertions
         passed, failure_reason = _check_assertions(test, run_result)
+
+        # Check latency
+        if passed and test.max_duration and run_result.duration > test.max_duration:
+            passed = False
+            failure_reason = f"too slow: {run_result.duration}s > {test.max_duration}s"
+
         status = "PASS" if passed else "FAIL"
         result = {
             "id": test.id,
@@ -140,6 +148,7 @@ def run_smoke_tests(
             "entity_type": test.entity_type,
             "entity_id": test.entity_id,
             "group": test.group,
+            "prompt": test.prompt,
             "status": status,
             "duration": run_result.duration,
         }

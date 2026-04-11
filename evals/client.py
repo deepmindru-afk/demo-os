@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 
@@ -28,6 +28,7 @@ class RunResult:
     raw_json: dict
     duration: float
     error: str | None = None
+    tool_calls: list[str] = field(default_factory=list)
 
 
 class AgentOSClient:
@@ -108,6 +109,7 @@ class AgentOSClient:
             raw = {}
             content = ""
             content_chunks: list[str] = []
+            tool_calls: list[str] = []
             for line in r.text.split("\n"):
                 if line.startswith("data:"):
                     try:
@@ -124,13 +126,21 @@ class AgentOSClient:
                             break
                     elif evt in ("RunContent", "TeamRunContent") and data.get("content"):
                         content_chunks.append(data["content"])
+                    elif evt in ("ToolCallStarted", "TeamToolCallStarted"):
+                        tool = data.get("tool") or data.get("tools", [{}])[0] if data.get("tools") else {}
+                        tool_name = tool.get("tool_name", "") if isinstance(tool, dict) else ""
+                        if tool_name:
+                            tool_calls.append(tool_name)
                     elif evt in ("RunPaused", "TeamRunPaused"):
                         raw = data
                         # Include tool names and args in content for testability
                         parts = [data.get("content", "")]
                         for tool in data.get("tools", []):
-                            parts.append(tool.get("tool_name", ""))
+                            tool_name = tool.get("tool_name", "")
+                            parts.append(tool_name)
                             parts.append(json.dumps(tool.get("tool_args", {})))
+                            if tool_name:
+                                tool_calls.append(tool_name)
                         content = " ".join(parts)
                         break
             # If no RunCompleted/RunPaused content, assemble from chunks
@@ -141,6 +151,7 @@ class AgentOSClient:
                 content=content,
                 raw_json=raw,
                 duration=duration,
+                tool_calls=tool_calls,
             )
         except httpx.TimeoutException:
             return RunResult(

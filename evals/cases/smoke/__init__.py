@@ -20,14 +20,16 @@ class SmokeTest:
     response_matches: list[str] = field(default_factory=list)
     requires: list[str] = field(default_factory=list)
     timeout: float = 120.0
+    max_duration: float | None = None
 
 
 def all_smoke_tests() -> list[SmokeTest]:
     """Return all smoke test cases across all groups."""
     from evals.cases.smoke.agents import AGENT_TESTS
     from evals.cases.smoke.graceful import GRACEFUL_TESTS
+    from evals.cases.smoke.hitl import HITL_TESTS
     from evals.cases.smoke.security import SECURITY_TESTS
     from evals.cases.smoke.teams import TEAM_TESTS
     from evals.cases.smoke.workflows import WORKFLOW_TESTS
 
-    return AGENT_TESTS + TEAM_TESTS + WORKFLOW_TESTS + SECURITY_TESTS + GRACEFUL_TESTS
+    return AGENT_TESTS + TEAM_TESTS + WORKFLOW_TESTS + SECURITY_TESTS + GRACEFUL_TESTS + HITL_TESTS

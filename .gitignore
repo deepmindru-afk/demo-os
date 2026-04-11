@@ -60,6 +60,7 @@ Thumbs.db
 # Project-specific
 # =========================
 tmp
+evals/.results/
 
 # Optional: local PyPI creds (uncomment if you ever create it)
 # .pypirc
