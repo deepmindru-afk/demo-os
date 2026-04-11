@@ -248,13 +248,20 @@ python -m evals improve --failures
 Required:
 - `OPENAI_API_KEY`
 
-Optional:
+Optional (model providers — each enables registry models in Studio):
+- `ANTHROPIC_API_KEY` - Claude Sonnet 4.5, Haiku 4.5 + Reasoner fallback
+- `GOOGLE_API_KEY` - Gemini 3 Flash, Gemini 2.5 Pro
+- `GROQ_API_KEY` - Llama 3.3 70B
+- `DEEPSEEK_API_KEY` - DeepSeek Chat, DeepSeek Reasoner
+- `XAI_API_KEY` - Grok 3
+- `MISTRAL_API_KEY` - Mistral Large
+
+Optional (tools & integrations):
 - `EXA_API_KEY` - Web search for Reasoner, AI Research, Reporter, Contacts
 - `PARALLEL_API_KEY` - Parallel web search (Pal Researcher, Coda Researcher)
 - `ELEVENLABS_API_KEY` - TTS for Studio, Repo Walkthrough
 - `FAL_KEY` - Image-to-image for Studio
 - `GITHUB_TOKEN` - GitHub integration for Coda
-- `ANTHROPIC_API_KEY` - Fallback model for Reasoner
 - `DB_DRIVER` - Database driver (default: `postgresql+psycopg`)
 - `PORT` - API server port (default: `8000`)
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_DATABASE`

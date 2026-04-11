@@ -1,6 +1,10 @@
 """Investment Team - Multi-agent team modes demo."""
 
-from teams.investment.team import investment_broadcast as investment_broadcast
-from teams.investment.team import investment_coordinate as investment_coordinate
-from teams.investment.team import investment_route as investment_route
-from teams.investment.team import investment_tasks as investment_tasks
+from teams.investment.team import (
+    investment_broadcast,
+    investment_coordinate,
+    investment_knowledge,
+    investment_learnings,
+    investment_route,
+    investment_tasks,
+)

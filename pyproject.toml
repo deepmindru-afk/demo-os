@@ -9,11 +9,14 @@ authors = [{ name = "Agno", email = "hello@agno.com" }]
 dependencies = [
   "agno[os]",
   "anthropic",
-  "chromadb",
-  "duckdb",
+  "arxiv",
+  "ddgs",
+  "elevenlabs",
   "exa-py",
+  "fal-client",
   "google-api-python-client",
   "google-auth-oauthlib",
+  "google-genai>=1.52.0",
   "mcp",
   "openai",
   "pandas",
@@ -26,7 +29,9 @@ dependencies = [
   "reportlab",
   "slack-sdk",
   "sqlalchemy",
+  "wikipedia",
   "yfinance",
+  "youtube-transcript-api",
 ]
 
 [project.optional-dependencies]

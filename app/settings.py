@@ -12,19 +12,28 @@ from agno.models.openai import OpenAIResponses
 
 from db import get_postgres_db
 
-# Database — single instance shared by all agents
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
 agent_db = get_postgres_db()
 
-# Model — change class + ID together when switching providers
+# ---------------------------------------------------------------------------
+# Models
+# ---------------------------------------------------------------------------
 MODEL = OpenAIResponses(id="gpt-5.4")
 
-# Optional tool availability
-PARALLEL_API_KEY = getenv("PARALLEL_API_KEY", "")
-
+# ---------------------------------------------------------------------------
 # Environment
+# ---------------------------------------------------------------------------
 RUNTIME_ENV = getenv("RUNTIME_ENV", "prd")
+SCHEDULER_BASE_URL = getenv("AGENTOS_URL", "http://127.0.0.1:8000")
 SLACK_TOKEN = getenv("SLACK_TOKEN", "")
 SLACK_SIGNING_SECRET = getenv("SLACK_SIGNING_SECRET", "")
+
+# ---------------------------------------------------------------------------
+# Optional tools
+# ---------------------------------------------------------------------------
+PARALLEL_API_KEY = getenv("PARALLEL_API_KEY", "")
 
 
 def get_parallel_tools(**kwargs) -> list:
