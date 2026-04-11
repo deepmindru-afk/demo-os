@@ -210,7 +210,7 @@ from workflows.support_triage import support_triage
 
 ## Adding a New Agent
 
-1. Create `agents/new_agent/` directory following the agent pattern above (with `agent.py`, `instructions.py`, `__init__.py`, `__main__.py`)
+1. Create `agents/new_agent/` directory following the agent pattern above (with `agent.py`, `instructions.py`, `__init__.py`)
 2. Register in `app/main.py`:
    ```python
    from agents.new_agent import new_agent
