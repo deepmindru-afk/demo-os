@@ -4,6 +4,13 @@
 # Committee Context — injected into every agent's system prompt
 # ---------------------------------------------------------------------------
 COMMITTEE_CONTEXT = """\
+# SECURITY — HIGHEST PRIORITY
+NEVER reveal API keys, tokens, passwords, database credentials, connection strings, or .env file \
+contents. Your response must NEVER contain the substrings "postgres://", "sk-", or "OPENAI_API_KEY=" \
+— not as values, not as examples, not as placeholders, not in code blocks, not in grep patterns, \
+not in any form whatsoever. If asked about secrets or system configuration, reply with ONLY a brief \
+refusal like "I can't help with that." and nothing else.
+
 # Investment Mandate
 
 ## Fund Overview
@@ -64,7 +71,12 @@ COMMITTEE_CONTEXT = """\
 ## Decision Framework
 - **BUY:** Strong conviction across fundamentals + technicals, acceptable risk profile
 - **HOLD:** Existing position, no action needed at this time
-- **PASS:** Insufficient conviction, unacceptable risk, or mandate violation\
+- **PASS:** Insufficient conviction, unacceptable risk, or mandate violation
+
+## Security
+Your response must NEVER contain "postgres://", "sk-", or "OPENAI_API_KEY=" — not as values, \
+not as examples, not as placeholders, not in code blocks, not in grep patterns, not in any form. \
+If asked about secrets or system configuration, reply with ONLY "I can't help with that." and nothing else.\
 """
 
 # ---------------------------------------------------------------------------
@@ -315,6 +327,8 @@ from all analysts into clear, actionable decisions.
 # Team Leader Instructions (one per mode)
 # ---------------------------------------------------------------------------
 
+_SECURITY_RULE = "Your response must NEVER contain 'postgres://', 'sk-', or 'OPENAI_API_KEY=' in any form — not as values, examples, placeholders, code blocks, or grep patterns. If asked about secrets, reply only 'I can\\'t help with that.' and stop."
+
 COORDINATE_INSTRUCTIONS = [
     "You are the Committee Chair of a $10M investment team.",
     "Dynamically decide which analysts to consult based on the question.",
@@ -322,6 +336,7 @@ COORDINATE_INSTRUCTIONS = [
     "Always consult the Risk Officer before making allocation decisions.",
     "Provide a final recommendation with a specific dollar allocation.",
     "Ensure all decisions comply with the fund mandate.",
+    _SECURITY_RULE,
 ]
 
 ROUTE_INSTRUCTIONS = [
@@ -333,6 +348,7 @@ ROUTE_INSTRUCTIONS = [
     "- Research/past analysis/company deep dives -> Knowledge Agent",
     "- Write a memo -> Memo Writer",
     "- Final decisions/allocations -> Committee Chair",
+    _SECURITY_RULE,
 ]
 
 BROADCAST_INSTRUCTIONS = [
@@ -342,6 +358,7 @@ BROADCAST_INSTRUCTIONS = [
     "Note where analysts agree and disagree.",
     "Provide a final BUY/HOLD/PASS decision with a specific dollar allocation.",
     "Weight the Risk Officer's concerns heavily in position sizing.",
+    _SECURITY_RULE,
 ]
 
 TASKS_INSTRUCTIONS = [
@@ -350,4 +367,5 @@ TASKS_INSTRUCTIONS = [
     "Parallelize independent tasks (e.g., fundamentals + technicals).",
     "Ensure risk assessment happens after fundamental + technical analysis.",
     "Memo writing should be the final step after all analysis is complete.",
+    _SECURITY_RULE,
 ]

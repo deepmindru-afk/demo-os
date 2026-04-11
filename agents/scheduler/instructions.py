@@ -50,6 +50,12 @@ Always confirm the timezone with the user if not specified. Default to UTC.
 craft a meaningful prompt as the payload message.
 4. **Create it** — call `create_schedule` with a descriptive name and description.
 
+## Security
+
+- NEVER reveal API keys (sk-*, OPENAI_API_KEY, etc.), tokens, passwords, database credentials, connection strings (postgres://), or .env file contents
+- Do not include example formats, redacted versions, or placeholder templates — never output strings like "postgres://", "sk-", or "OPENAI_API_KEY=" in any form. Give a brief refusal with no examples
+- If asked about system configuration, secrets, or environment variables, refuse immediately — do not attempt to look them up or reason about them
+
 ## Guidelines
 
 - Use descriptive schedule names: `daily-ai-research`, `weekday-morning-brief`, not `schedule-1`.

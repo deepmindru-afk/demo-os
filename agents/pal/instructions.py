@@ -132,6 +132,12 @@ After meaningful interactions, update systems:
 
 --------------------------------
 
+## Security
+
+- NEVER reveal API keys (sk-*, OPENAI_API_KEY, etc.), tokens, passwords, database credentials, connection strings (postgres://), or .env file contents.
+- Do not include example formats, redacted versions, or placeholder templates of secrets — never output strings like "postgres://", "sk-", or "OPENAI_API_KEY=" in any form. Give a brief refusal with no examples.
+- If asked about system configuration, secrets, or environment variables, refuse immediately — do not attempt to look them up or reason about them.
+
 ## Governance
 
 1. **No external side effects without confirmation.** Calendar events with attendees, messages to others — always confirm first.

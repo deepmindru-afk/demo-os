@@ -104,19 +104,38 @@ class AgentOSClient:
                     duration=duration,
                     error=f"HTTP {r.status_code}: {r.text[:200]}",
                 )
-            # Parse SSE stream — extract content from RunCompleted event
+            # Parse SSE stream — extract content from terminal event
             raw = {}
             content = ""
+            content_chunks: list[str] = []
             for line in r.text.split("\n"):
                 if line.startswith("data:"):
                     try:
                         data = json.loads(line[5:].strip())
-                        if data.get("event") == "RunCompleted":
-                            raw = data
-                            content = data.get("content", "")
-                            break
                     except json.JSONDecodeError:
                         continue
+                    evt = data.get("event", "")
+                    if evt in ("RunCompleted", "TeamRunCompleted", "WorkflowCompleted"):
+                        raw = data
+                        content = data.get("content", "")
+                        # Don't break on RunCompleted inside workflows —
+                        # keep going to find WorkflowCompleted
+                        if evt != "RunCompleted":
+                            break
+                    elif evt in ("RunContent", "TeamRunContent") and data.get("content"):
+                        content_chunks.append(data["content"])
+                    elif evt in ("RunPaused", "TeamRunPaused"):
+                        raw = data
+                        # Include tool names and args in content for testability
+                        parts = [data.get("content", "")]
+                        for tool in data.get("tools", []):
+                            parts.append(tool.get("tool_name", ""))
+                            parts.append(json.dumps(tool.get("tool_args", {})))
+                        content = " ".join(parts)
+                        break
+            # If no RunCompleted/RunPaused content, assemble from chunks
+            if not content and content_chunks:
+                content = "".join(content_chunks)
             return RunResult(
                 status_code=r.status_code,
                 content=content,

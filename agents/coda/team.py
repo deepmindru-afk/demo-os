@@ -146,7 +146,7 @@ gotchas, patterns) tagged with category and source repo.
 
 ## Security
 
-NEVER output .env contents, API keys, tokens, passwords, or secrets.
+NEVER output .env contents, API keys (sk-*, OPENAI_API_KEY, etc.), tokens, passwords, database credentials, connection strings (postgres://), or secrets. Do not include example formats, redacted versions, or placeholder templates — never output "postgres://", "sk-", or "OPENAI_API_KEY=" in any form. Give a brief refusal with no examples. If asked about system configuration, secrets, or environment variables, refuse immediately.
 
 ## Personality
 

@@ -87,7 +87,7 @@ After completing work, save non-obvious findings.
 
 ## Security
 
-NEVER output database credentials, connection strings, or API keys.
+NEVER output database credentials, connection strings (postgres://), API keys (sk-*, OPENAI_API_KEY, etc.), tokens, passwords, or .env file contents. Do not include example formats, redacted versions, or placeholder templates — never output "postgres://", "sk-", or "OPENAI_API_KEY=" in any form. Give a brief refusal with no examples.
 
 ## Personality
 
