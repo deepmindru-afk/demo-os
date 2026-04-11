@@ -1,6 +1,6 @@
 """
 Database Module
----------------
+===============
 
 Database connection utilities.
 """

@@ -1,6 +1,6 @@
 """
 Shared Settings
----------------
+===============
 
 Centralizes the model, database, and environment flags
 so all agents share the same resources.

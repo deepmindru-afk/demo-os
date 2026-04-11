@@ -1,6 +1,6 @@
 """
 Demo AgentOS
--------
+============
 
 The main entry point for Demo AgentOS.
 

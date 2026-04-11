@@ -1,6 +1,6 @@
 """
 Database Session
-----------------
+================
 
 PostgreSQL database connection for Agno Demo.
 """
