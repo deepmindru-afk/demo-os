@@ -108,6 +108,91 @@ source .venv/bin/activate && ./scripts/validate.sh
 
 ## Conventions
 
+### Parameter Ordering
+
+All Agent, Team, and Workflow constructors follow a strict parameter ordering convention.
+When adding or editing constructors, always follow the group order below. Omit groups
+that don't apply — but never reorder within or across groups.
+
+**Agent parameter order:**
+
+```
+# Identity
+id, name, role                          # role for team members only
+
+# Model
+model, reasoning, reasoning_min_steps,  # reasoning params if applicable
+reasoning_max_steps, fallback_models
+
+# Data
+db, knowledge, search_knowledge
+
+# Capabilities
+tools, skills,                          # what the agent can do
+learning, add_learnings_to_context      # how the agent improves
+
+# Instructions
+instructions                            # what to do with all the above
+
+# Hooks
+pre_hooks, post_hooks
+
+# Feature-specific (group by feature)
+dependencies, add_dependencies_to_context
+session_state, enable_agentic_state, add_session_state_to_context
+compress_tool_results, compression_manager
+
+# Memory
+enable_agentic_memory,
+search_past_sessions, num_past_sessions_to_search
+
+# Context
+add_datetime_to_context, add_history_to_context,
+read_chat_history, num_history_runs
+
+# Output
+markdown
+```
+
+**Team parameter order:**
+
+```
+# Identity
+id, name, mode
+
+# Model
+model
+
+# Members
+members
+
+# Data
+db
+
+# Capabilities
+tools,
+learning, add_learnings_to_context
+
+# Instructions
+instructions
+
+# Collaboration
+share_member_interactions, show_members_responses
+
+# Memory
+enable_agentic_memory,
+search_past_sessions, num_past_sessions_to_search
+
+# Context
+add_datetime_to_context, add_history_to_context,
+read_chat_history, num_history_runs
+
+# Output
+markdown
+```
+
+**Workflow parameter order:** `id`, `name`, `steps`
+
 ### Agent Pattern
 
 All standalone agents follow this structure:
@@ -123,13 +208,14 @@ my_agent = Agent(
     name="My Agent",
     model=MODEL,
     db=agent_db,
+    tools=[...],
     instructions=INSTRUCTIONS,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     add_history_to_context=True,
     read_chat_history=True,
     num_history_runs=5,
     markdown=True,
-    enable_agentic_memory=True,
 )
 ```
 
@@ -147,9 +233,11 @@ team = Team(
     model=MODEL,
     members=[agent1, agent2],
     db=agent_db,
+    tools=[...],
     instructions=LEADER_INSTRUCTIONS,
-    enable_agentic_memory=True,
     share_member_interactions=True,
+    enable_agentic_memory=True,
+    add_datetime_to_context=True,
     markdown=True,
 )
 ```

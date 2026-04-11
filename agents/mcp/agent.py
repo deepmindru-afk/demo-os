@@ -4,9 +4,6 @@ MCP - Agno Documentation Agent (via MCP)
 
 Queries docs.agno.com directly through MCP, so answers always reflect
 the latest documentation. No local knowledge base needed.
-
-Run:
-    python -m agents.mcp
 """
 
 from agno.agent import Agent

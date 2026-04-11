@@ -102,10 +102,10 @@ compiler = Agent(
     role="Reads raw documents and compiles them into structured wiki articles",
     model=OpenAIResponses(id="gpt-5.4"),
     db=agent_db,
-    instructions=COMPILER_INSTRUCTIONS,
     knowledge=pal_knowledge,
     search_knowledge=True,
     tools=build_compiler_tools(pal_knowledge),
+    instructions=COMPILER_INSTRUCTIONS,
     add_datetime_to_context=True,
     markdown=True,
 )

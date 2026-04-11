@@ -9,9 +9,6 @@ Demonstrates Agno's Skills system:
 
 The ``skills=`` parameter automatically registers ``get_skill_instructions``,
 ``get_skill_reference``, and ``get_skill_script`` as agent tools.
-
-Run:
-    python -m agents.craftsman
 """
 
 from pathlib import Path

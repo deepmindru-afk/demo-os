@@ -6,9 +6,6 @@ Demonstrates Agno's dependency injection capabilities:
 - ``dependencies`` — dict of runtime data injected at agent creation
 - ``add_dependencies_to_context=True`` — dependencies visible in agent context
 - ``RunContext.dependencies`` — tools access injected data via run context
-
-Run:
-    python -m agents.injector
 """
 
 from agno.agent import Agent

@@ -31,6 +31,27 @@ CASES: list[dict] = [
         "expected_output": "A specific count of new customers from the previous month",
         "guidelines": "Must include a concrete number. Should reference the data source.",
     },
+    {
+        "entity_type": "team",
+        "entity_id": "dash",
+        "input": "Which acquisition source brings the most revenue?",
+        "expected_output": "The source with highest total MRR from active subscriptions, with comparison to other sources",
+        "guidelines": "Must name a specific source and provide revenue figures. Should compare across sources.",
+    },
+    {
+        "entity_type": "team",
+        "entity_id": "dash",
+        "input": "What's the average satisfaction score for support tickets?",
+        "expected_output": "Average CSAT score between 1-5, noting that ~30% of tickets are unrated",
+        "guidelines": "Must provide a numeric score. Should mention the NULL/unrated caveat.",
+    },
+    {
+        "entity_type": "team",
+        "entity_id": "dash",
+        "input": "What are the top reasons customers cancel?",
+        "expected_output": "Ranked list of cancellation reasons with counts or MRR impact",
+        "guidelines": "Must list specific reasons from the cancellation_reason column with quantitative data.",
+    },
     # -------------------------------------------------------------------------
     # Research — analysis quality
     # -------------------------------------------------------------------------

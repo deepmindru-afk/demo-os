@@ -4,9 +4,6 @@ Scheduler - Schedule Management Agent
 
 Creates and manages recurring schedules for agents, teams, and
 workflows in AgentOS using SchedulerTools.
-
-Run:
-    python -m agents.scheduler
 """
 
 from agno.agent import Agent

@@ -54,8 +54,8 @@ syncer = Agent(
     role="Commits and pushes context/ changes to GitHub",
     model=OpenAIResponses(id="gpt-5.4"),
     db=agent_db,
-    instructions=SYNCER_INSTRUCTIONS,
     tools=build_syncer_tools(),
+    instructions=SYNCER_INSTRUCTIONS,
     add_datetime_to_context=True,
     markdown=True,
 )

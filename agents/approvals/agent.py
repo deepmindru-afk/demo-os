@@ -6,9 +6,6 @@ A compliance and finance agent demonstrating Agno's approval patterns:
 - @approval decorator: blocking approval before execution
 - @approval(type="audit"): audit trail logging
 - requires_confirmation=True: HITL confirmation
-
-Run:
-    python -m agents.approvals
 """
 
 from agno.agent import Agent

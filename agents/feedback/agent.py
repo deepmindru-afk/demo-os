@@ -7,9 +7,6 @@ and control flow interrupts via Agno's UserFeedbackTools and
 UserControlFlowTools. The agent uses `ask_user` for structured questions
 with predefined options and control flow tools for branching based on
 user choices.
-
-Run:
-    python -m agents.feedback
 """
 
 from agno.agent import Agent

@@ -7,9 +7,6 @@ An IT operations helpdesk agent that demonstrates:
 - PIIDetectionGuardrail as a pre-hook to detect personal information
 - PromptInjectionGuardrail as a pre-hook to detect adversarial prompts
 - Post-hook audit logging for compliance
-
-Run:
-    python -m agents.helpdesk
 """
 
 from agno.agent import Agent

@@ -11,9 +11,6 @@ Pal is a team of specialists coordinated by a leader:
 - Compiler:   reads raw/, compiles structured wiki articles
 - Linter:     health checks on the wiki, finds gaps
 - Syncer:     commits and pushes context/ changes to GitHub (conditional)
-
-Test:
-    python -m agents.pal
 """
 
 from agno.agent import Agent
@@ -162,13 +159,13 @@ pal = Team(
     model=OpenAIResponses(id="gpt-5.4"),
     members=members,
     db=agent_db,
-    instructions=instructions,
     tools=leader_tools,
     learning=LearningMachine(
         knowledge=pal_learnings,
         learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
     ),
     add_learnings_to_context=True,
+    instructions=instructions,
     enable_agentic_memory=True,
     search_past_sessions=True,
     num_past_sessions_to_search=10,

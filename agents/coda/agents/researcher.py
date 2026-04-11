@@ -77,16 +77,16 @@ if getenv("PARALLEL_API_KEY"):
         role="Search the web for docs, errors, APIs, and best practices",
         model=MODEL,
         db=agent_db,
-        instructions=_instructions,
+        tools=[
+            *get_parallel_tools(),
+            ReasoningTools(),
+        ],
         learning=LearningMachine(
             knowledge=coda_learnings,
             learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
         ),
         add_learnings_to_context=True,
-        tools=[
-            *get_parallel_tools(),
-            ReasoningTools(),
-        ],
+        instructions=_instructions,
         add_datetime_to_context=True,
         add_history_to_context=True,
         num_history_runs=5,

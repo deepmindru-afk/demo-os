@@ -66,12 +66,6 @@ coder = Agent(
     role="Write, test, and ship code in isolated git worktrees",
     model=MODEL,
     db=agent_db,
-    instructions=instructions,
-    learning=LearningMachine(
-        knowledge=coda_learnings,
-        learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
-    ),
-    add_learnings_to_context=True,
     tools=[
         CodingTools(base_dir=REPOS_DIR, all=True, shell_timeout=120),
         GitTools(base_dir=str(REPOS_DIR)),
@@ -90,6 +84,12 @@ coder = Agent(
         ),
         ReasoningTools(),
     ],
+    learning=LearningMachine(
+        knowledge=coda_learnings,
+        learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
+    ),
+    add_learnings_to_context=True,
+    instructions=instructions,
     add_datetime_to_context=True,
     add_history_to_context=True,
     num_history_runs=5,

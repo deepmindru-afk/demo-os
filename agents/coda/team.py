@@ -6,9 +6,6 @@ A multi-agent team that understands codebases and lives in Slack.
 The leader triages requests and delegates to specialized agents:
 Explorer for code search/analysis, Triager for issue management,
 Coder for writing code.
-
-Test:
-    python -m agents.coda
 """
 
 from os import getenv
@@ -193,26 +190,24 @@ coda = Team(
     model=MODEL,
     members=[m for m in [coder, explorer, planner, researcher, triager] if m is not None],
     db=team_db,
-    instructions=instructions,
+    tools=tools if tools else None,
     # Learning (shared knowledge base with members)
     learning=LearningMachine(
         knowledge=coda_learnings,
         learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
     ),
     add_learnings_to_context=True,
-    # Memory
-    enable_agentic_memory=True,
-    # Session
-    search_past_sessions=True,
-    num_past_sessions_to_search=5,
-    read_chat_history=True,
-    add_history_to_context=True,
-    num_history_runs=10,
+    instructions=instructions,
     # Member coordination
     share_member_interactions=True,
-    # Tools
-    tools=tools if tools else None,
+    # Memory
+    enable_agentic_memory=True,
+    search_past_sessions=True,
+    num_past_sessions_to_search=5,
     # Context
     add_datetime_to_context=True,
+    add_history_to_context=True,
+    read_chat_history=True,
+    num_history_runs=10,
     markdown=True,
 )

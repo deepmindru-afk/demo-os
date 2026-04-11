@@ -74,10 +74,10 @@ linter = Agent(
     role="Runs health checks on the wiki, finds issues, suggests improvements",
     model=OpenAIResponses(id="gpt-5.4"),
     db=agent_db,
-    instructions=LINTER_INSTRUCTIONS,
     knowledge=pal_knowledge,
     search_knowledge=True,
     tools=build_linter_tools(pal_knowledge),
+    instructions=LINTER_INSTRUCTIONS,
     add_datetime_to_context=True,
     markdown=True,
 )

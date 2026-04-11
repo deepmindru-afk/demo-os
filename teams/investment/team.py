@@ -51,11 +51,11 @@ _common: dict[str, Any] = dict(
     knowledge=investment_knowledge,
     search_knowledge=True,
     learning=_learning,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     add_history_to_context=True,
     num_history_runs=5,
     markdown=True,
-    enable_agentic_memory=True,
 )
 
 # ---------------------------------------------------------------------------
@@ -66,8 +66,8 @@ financial_analyst = Agent(
     name="Financial Analyst",
     role="Fundamental valuation, balance sheet, and earnings analysis",
     model=MODEL,
-    instructions=FINANCIAL_ANALYST_INSTRUCTIONS,
     tools=[YFinanceTools()],
+    instructions=FINANCIAL_ANALYST_INSTRUCTIONS,
     **_common,
 )
 
@@ -82,8 +82,8 @@ market_analyst = Agent(
     name="Market Analyst",
     role="Macro environment, sector trends, and breaking news",
     model=MODEL,
-    instructions=MARKET_ANALYST_INSTRUCTIONS,
     tools=market_analyst_tools,
+    instructions=MARKET_ANALYST_INSTRUCTIONS,
     **_common,
 )
 
@@ -92,8 +92,8 @@ technical_analyst = Agent(
     name="Technical Analyst",
     role="Price action, momentum indicators, and entry/exit timing",
     model=MODEL,
-    instructions=TECHNICAL_ANALYST_INSTRUCTIONS,
     tools=[YFinanceTools()],
+    instructions=TECHNICAL_ANALYST_INSTRUCTIONS,
     **_common,
 )
 
@@ -102,8 +102,8 @@ risk_officer = Agent(
     name="Risk Officer",
     role="Downside scenarios, position sizing, and mandate compliance",
     model=MODEL,
-    instructions=RISK_OFFICER_INSTRUCTIONS,
     tools=[YFinanceTools()],
+    instructions=RISK_OFFICER_INSTRUCTIONS,
     **_common,
 )
 
@@ -112,7 +112,6 @@ knowledge_agent = Agent(
     name="Knowledge Agent",
     role="Team librarian — research RAG and memo archive navigation",
     model=MODEL,
-    instructions=KNOWLEDGE_AGENT_INSTRUCTIONS,
     tools=[
         FileTools(
             base_dir=MEMOS_DIR,
@@ -123,6 +122,7 @@ knowledge_agent = Agent(
             enable_delete_file=False,
         )
     ],
+    instructions=KNOWLEDGE_AGENT_INSTRUCTIONS,
     **_common,
 )
 
@@ -132,7 +132,6 @@ memo_writer = Agent(
     role="Synthesize analyst inputs into formal investment memos",
     model=MODEL,
     db=agent_db,
-    instructions=MEMO_WRITER_INSTRUCTIONS,
     tools=[
         FileTools(
             base_dir=MEMOS_DIR,
@@ -143,11 +142,12 @@ memo_writer = Agent(
             enable_delete_file=False,
         )
     ],
+    instructions=MEMO_WRITER_INSTRUCTIONS,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     add_history_to_context=True,
     num_history_runs=5,
     markdown=True,
-    enable_agentic_memory=True,
 )
 
 committee_chair = Agent(
@@ -172,10 +172,10 @@ investment_coordinate = Team(
     model=MODEL,
     members=_full_members,
     db=agent_db,
-    instructions=COORDINATE_INSTRUCTIONS,
     learning=_learning,
-    enable_agentic_memory=True,
+    instructions=COORDINATE_INSTRUCTIONS,
     show_members_responses=True,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     markdown=True,
 )
@@ -200,10 +200,10 @@ investment_broadcast = Team(
     model=MODEL,
     members=_core_members,
     db=agent_db,
-    instructions=BROADCAST_INSTRUCTIONS,
     learning=_learning,
-    enable_agentic_memory=True,
+    instructions=BROADCAST_INSTRUCTIONS,
     show_members_responses=True,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     markdown=True,
 )
@@ -215,10 +215,10 @@ investment_tasks = Team(
     model=MODEL,
     members=_full_members,
     db=agent_db,
-    instructions=TASKS_INSTRUCTIONS,
     learning=_learning,
-    enable_agentic_memory=True,
+    instructions=TASKS_INSTRUCTIONS,
     show_members_responses=True,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     markdown=True,
 )

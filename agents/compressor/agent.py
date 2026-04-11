@@ -5,9 +5,6 @@ Compressor - Tool Result Compression Demo Agent
 Demonstrates Agno's context compression capabilities:
 - ``compress_tool_results=True`` — automatically compress tool outputs
 - ``CompressionManager`` — custom compression with a smaller/cheaper model
-
-Run:
-    python -m agents.compressor
 """
 
 from agno.agent import Agent

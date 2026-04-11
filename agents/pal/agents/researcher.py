@@ -60,15 +60,15 @@ if getenv("PARALLEL_API_KEY"):
         role="Gathers source material from the web, converts to markdown, saves to raw/",
         model=OpenAIResponses(id="gpt-5.4"),
         db=agent_db,
-        instructions=RESEARCHER_INSTRUCTIONS,
         knowledge=pal_knowledge,
         search_knowledge=True,
+        tools=build_researcher_tools(pal_knowledge),
         learning=LearningMachine(
             knowledge=pal_learnings,
             learned_knowledge=LearnedKnowledgeConfig(mode=LearningMode.AGENTIC),
         ),
         add_learnings_to_context=True,
-        tools=build_researcher_tools(pal_knowledge),
+        instructions=RESEARCHER_INSTRUCTIONS,
         add_datetime_to_context=True,
         markdown=True,
     )

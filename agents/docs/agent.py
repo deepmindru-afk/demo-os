@@ -1,13 +1,10 @@
 """
-Docs - Documentation Agent
+Docs - Agno Documentation Agent (via LLMs.txt)
 ===========================
 
 Answers developer questions about the Agno framework by dynamically
 fetching documentation pages via the llms.txt protocol. No pre-loading
 required -- the agent reads the index and fetches relevant pages on demand.
-
-Run:
-    python -m agents.docs
 """
 
 from agno.agent import Agent
@@ -23,10 +20,10 @@ docs_agent = Agent(
     db=agent_db,
     tools=[LLMsTxtTools()],
     instructions=INSTRUCTIONS,
+    enable_agentic_memory=True,
     add_datetime_to_context=True,
     add_history_to_context=True,
     read_chat_history=True,
     num_history_runs=5,
     markdown=True,
-    enable_agentic_memory=True,
 )

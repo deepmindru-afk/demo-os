@@ -6,9 +6,6 @@ Demonstrates Agno's session state capabilities:
 - ``session_state`` — initial state dict persisted across sessions
 - ``enable_agentic_state=True`` — agent can update state directly
 - ``add_session_state_to_context=True`` — state injected into agent context
-
-Run:
-    python -m agents.taskboard
 """
 
 from agno.agent import Agent

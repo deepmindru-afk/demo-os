@@ -5,9 +5,6 @@ Dash Team
 A self-learning data agent that provides insights, not just query results.
 The leader routes requests to specialized agents:
 Analyst for SQL/data queries, Engineer for schema/pipeline operations.
-
-Test:
-    python -m agents.dash
 """
 
 from agno.team import Team, TeamMode
@@ -46,24 +43,23 @@ dash = Team(
     model=MODEL,
     members=[analyst, engineer],
     db=agent_db,
-    instructions=build_leader_instructions(),
     tools=leader_tools,
     # Leader only needs learnings for context (error patterns, gotchas).
     # Curated knowledge (SQL, table metadata) is for the specialists.
     learning=dash_learning,
     add_learnings_to_context=True,
+    instructions=build_leader_instructions(),
     # Member coordination
     share_member_interactions=True,
-    # Per-User memory
+    # Memory
     enable_agentic_memory=True,
-    # Session context
     search_past_sessions=True,
     num_past_sessions_to_search=5,
-    read_chat_history=True,
-    add_history_to_context=True,
-    num_history_runs=5,
-    # Context (time, markdown, etc.)
+    # Context
     add_datetime_to_context=True,
+    add_history_to_context=True,
+    read_chat_history=True,
+    num_history_runs=5,
     markdown=True,
 )
 
