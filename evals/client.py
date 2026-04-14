@@ -127,7 +127,7 @@ class AgentOSClient:
                     elif evt in ("RunContent", "TeamRunContent") and data.get("content"):
                         content_chunks.append(data["content"])
                     elif evt in ("ToolCallStarted", "TeamToolCallStarted"):
-                        tool = data.get("tool") or data.get("tools", [{}])[0] if data.get("tools") else {}
+                        tool = data.get("tool") or (data.get("tools", [{}])[0] if data.get("tools") else {})
                         tool_name = tool.get("tool_name", "") if isinstance(tool, dict) else ""
                         if tool_name:
                             tool_calls.append(tool_name)

@@ -20,8 +20,9 @@ def add_task(
         category: general, work, or personal.
         due_date: Optional due date in YYYY-MM-DD format.
     """
-    state = agent.session_state or {}
-    tasks = state.get("tasks", [])
+    if agent.session_state is None:
+        agent.session_state = {"tasks": [], "categories": ["general", "work", "personal"]}
+    tasks = agent.session_state.get("tasks", [])
     task_id = f"T-{len(tasks) + 1:03d}"
     tasks.append(
         {
@@ -33,7 +34,7 @@ def add_task(
             "due_date": due_date,
         }
     )
-    agent.update_session_state({"tasks": tasks})
+    agent.session_state["tasks"] = tasks
     return f"Added {task_id}: {title} [priority={priority}, category={category}]"
 
 
@@ -45,13 +46,13 @@ def update_task_status(agent: Agent, task_id: str, status: str) -> str:
         task_id: The task identifier (e.g., T-001).
         status: New status — todo, in_progress, done, or cancelled.
     """
-    state = agent.session_state or {}
-    tasks = state.get("tasks", [])
+    if agent.session_state is None:
+        agent.session_state = {"tasks": [], "categories": ["general", "work", "personal"]}
+    tasks = agent.session_state.get("tasks", [])
     for task in tasks:
         if task["id"] == task_id:
             old_status = task["status"]
             task["status"] = status
-            agent.update_session_state({"tasks": tasks})
             return f"{task_id} updated: {old_status} → {status}"
     return f"Task {task_id} not found."
 
@@ -64,8 +65,9 @@ def list_tasks(agent: Agent, status: str = "", category: str = "") -> str:
         status: Filter by status (todo, in_progress, done, cancelled). Leave empty for all.
         category: Filter by category (general, work, personal). Leave empty for all.
     """
-    state = agent.session_state or {}
-    tasks = state.get("tasks", [])
+    if agent.session_state is None:
+        agent.session_state = {"tasks": [], "categories": ["general", "work", "personal"]}
+    tasks = agent.session_state.get("tasks", [])
     if not tasks:
         return "No tasks on the board."
 
@@ -96,12 +98,12 @@ def remove_task(agent: Agent, task_id: str) -> str:
     Args:
         task_id: The task identifier to remove (e.g., T-001).
     """
-    state = agent.session_state or {}
-    tasks = state.get("tasks", [])
+    if agent.session_state is None:
+        agent.session_state = {"tasks": [], "categories": ["general", "work", "personal"]}
+    tasks = agent.session_state.get("tasks", [])
     for i, task in enumerate(tasks):
         if task["id"] == task_id:
             removed = tasks.pop(i)
-            agent.update_session_state({"tasks": tasks})
             return f"Removed {task_id}: {removed['title']}"
     return f"Task {task_id} not found."
 
@@ -109,8 +111,9 @@ def remove_task(agent: Agent, task_id: str) -> str:
 @tool
 def get_summary(agent: Agent) -> str:
     """Get a summary of all tasks by status and category."""
-    state = agent.session_state or {}
-    tasks = state.get("tasks", [])
+    if agent.session_state is None:
+        agent.session_state = {"tasks": [], "categories": ["general", "work", "personal"]}
+    tasks = agent.session_state.get("tasks", [])
     if not tasks:
         return "No tasks on the board."
 

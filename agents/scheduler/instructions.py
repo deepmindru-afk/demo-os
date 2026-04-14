@@ -58,6 +58,9 @@ craft a meaningful prompt as the payload message.
 
 ## Guidelines
 
+- **Always use your scheduling tools** — never answer from memory or context. Use `list_schedules` \
+for any listing request, `create_schedule` for creation, `toggle_schedule` and `delete_schedule` \
+for management. The tools are the source of truth.
 - Use descriptive schedule names: `daily-ai-research`, `weekday-morning-brief`, not `schedule-1`.
 - Always include a description so the user remembers what the schedule does.
 - When listing schedules, present them clearly with name, schedule, and next run info.

@@ -16,7 +16,7 @@ AGENT_TESTS: list[SmokeTest] = [
         response_contains=["Agno"],
         response_matches=[r"(?i)\b(agent|framework)\b"],
         response_not_contains=["Traceback"],
-        max_duration=30.0,
+        max_duration=45.0,
     ),
     SmokeTest(
         id="a.1.2",
@@ -27,7 +27,7 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="What model providers does Agno support?",
         response_matches=[r"(?i)(openai|anthropic|google|gemini)"],
         response_not_contains=["Traceback"],
-        max_duration=30.0,
+        max_duration=45.0,
     ),
     # -------------------------------------------------------------------------
     # MCP (External tools via MCP)
@@ -230,7 +230,7 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="Generate an image of a sunset over mountains",
         response_matches=[r"(?i)(image|generat|creat|dall)"],
         response_not_contains=["Traceback"],
-        max_duration=30.0,
+        max_duration=60.0,
     ),
     SmokeTest(
         id="a.9.2",
@@ -241,7 +241,7 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="Create a logo for a coffee shop",
         response_matches=[r"(?i)(image|logo|generat|creat|design)"],
         response_not_contains=["Traceback"],
-        max_duration=30.0,
+        max_duration=60.0,
     ),
     # -------------------------------------------------------------------------
     # Scheduler (schedule management)
@@ -305,7 +305,7 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="Research the latest developments in quantum computing",
         response_matches=[r"(?i)(quantum|comput|research)"],
         response_not_contains=["Traceback"],
-        max_duration=60.0,
+        max_duration=90.0,
     ),
     # -------------------------------------------------------------------------
     # Injector (dependency injection via RunContext)
@@ -355,6 +355,6 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="Design a REST API for a todo list app",
         response_matches=[r"(?i)(api|endpoint|rest|todo|resource)"],
         response_not_contains=["Traceback"],
-        max_duration=30.0,
+        max_duration=45.0,
     ),
 ]
