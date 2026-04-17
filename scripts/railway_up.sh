@@ -112,11 +112,6 @@ railway add -s demo-os \
     "${OPTIONAL_VARS[@]}"
 
 echo ""
-echo -e "${BOLD}Adding repos volume...${NC}"
-railway service link demo-os
-railway volume add -m /repos 2>/dev/null || echo -e "${DIM}Volume already exists or skipped${NC}"
-
-echo ""
 echo -e "${BOLD}Deploying application...${NC}"
 echo ""
 railway up --service demo-os -d
