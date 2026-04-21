@@ -96,9 +96,13 @@ jobs:
       - name: Run smoke tests
         id: smoke
         run: |
-          GROUP="${{ github.event.inputs.group || 'agents' }}"
-          if [ -n "$GROUP" ]; then
-            uv run python -m evals smoke --group "$GROUP" --output
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            GROUP="${{ github.event.inputs.group }}"
+            if [ -n "$GROUP" ]; then
+              uv run python -m evals smoke --group "$GROUP" --output
+            else
+              uv run python -m evals smoke --output
+            fi
           else
             uv run python -m evals smoke --output
           fi
