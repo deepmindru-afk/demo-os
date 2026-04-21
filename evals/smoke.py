@@ -160,6 +160,7 @@ def run_smoke_tests(
             print(f"         PASS ({run_result.duration}s)")
         else:
             print(f"         FAIL ({run_result.duration}s) — {failure_reason}")
+            print(f"         Response: {run_result.content[:300]}")
 
         if verbose:
             print(f"         Response: {run_result.content[:200]}")
