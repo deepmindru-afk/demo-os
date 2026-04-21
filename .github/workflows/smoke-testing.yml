@@ -76,6 +76,9 @@ jobs:
       - name: Install project
         run: uv sync --extra dev
 
+      - name: Seed Dash SQL tables
+        run: uv run python -m agents.dash.scripts.load_data --drop
+
       - name: Populate Dash knowledge base
         run: uv run python -m agents.dash.scripts.load_knowledge --recreate
 
