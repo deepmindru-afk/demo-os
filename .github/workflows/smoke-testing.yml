@@ -14,6 +14,10 @@ on:
     types: [labeled, synchronize]
     branches: ["main"]
 
+concurrency:
+  group: smoke-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 env:
   UV_SYSTEM_PYTHON: 1
   PYTHONPATH: ${{ github.workspace }}
