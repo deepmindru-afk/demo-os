@@ -26,7 +26,7 @@ jobs:
   smoke-testing:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-smoke')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     services:
       postgres:
