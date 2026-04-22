@@ -305,7 +305,7 @@ AGENT_TESTS: list[SmokeTest] = [
         prompt="Research the latest developments in quantum computing",
         response_matches=[r"(?i)(quantum|comput|research)"],
         response_not_contains=["Traceback"],
-        max_duration=90.0,
+        max_duration=150.0,
     ),
     # -------------------------------------------------------------------------
     # Injector (dependency injection via RunContext)

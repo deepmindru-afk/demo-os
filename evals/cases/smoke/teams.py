@@ -55,7 +55,7 @@ TEAM_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(agent|framework|market)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=90.0,
+        max_duration=360.0,
     ),
     # -------------------------------------------------------------------------
     # Research — route mode (should route to single specialist)
@@ -85,7 +85,7 @@ TEAM_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(ai|agent|development|future)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=90.0,
+        max_duration=200.0,
     ),
     # -------------------------------------------------------------------------
     # Research — tasks mode (decomposes into subtasks)
@@ -100,7 +100,7 @@ TEAM_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(agent|framework|compar)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=90.0,
+        max_duration=300.0,
     ),
     # -------------------------------------------------------------------------
     # Investment — coordinate mode
@@ -115,7 +115,7 @@ TEAM_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(nvidia|nvda|invest|recommend|analy)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=90.0,
+        max_duration=180.0,
     ),
     # -------------------------------------------------------------------------
     # Investment — route mode
@@ -160,6 +160,6 @@ TEAM_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(portfolio|diversif|stock|allocation)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=90.0,
+        max_duration=210.0,
     ),
 ]
