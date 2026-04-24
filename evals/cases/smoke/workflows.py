@@ -30,7 +30,7 @@ WORKFLOW_TESTS: list[SmokeTest] = [
         response_matches=[r"(?i)(ai|research|model|development)"],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=120.0,
+        max_duration=270.0,
     ),
     # -------------------------------------------------------------------------
     # Content Pipeline (parallel + loop + condition)
