@@ -215,7 +215,7 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_id="reporter",
         group="agents",
         prompt="Create a brief comparison of Python and Go as JSON",
-        response_matches=[r"(?i)(python|go)"],
+        response_matches=[r"(?i)\bpython\b", r"(?i)\bgo\b"],
         response_not_contains=["Traceback"],
         max_duration=45.0,
     ),
