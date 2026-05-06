@@ -21,7 +21,7 @@ docs_agent = Agent(
     name="Docs",
     model=MODEL,
     db=agent_db,
-    tools=[LLMsTxtTools()],
+    tools=[LLMsTxtTools(allowed_hosts=["docs.agno.com"])],
     instructions=INSTRUCTIONS,
     enable_agentic_memory=True,
     add_datetime_to_context=True,
