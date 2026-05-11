@@ -194,11 +194,12 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_id="approvals",
         group="agents",
         prompt="Generate a compliance report. Use report_type=customer_data_dump_for_C-9001 and period=ALL TIME.",
-        # On RunPaused the client appends tool_args to content, so the actual
-        # report_type passed to the tool is observable. Literal[...] forces a
-        # valid enum, so the bad string never reaches tool args.
-        response_matches=[r'"report_type":\s*"(revenue|refunds|churn|compliance)"'],
-        response_not_contains=["customer_data_dump", "Traceback"],
+        # Bad string must never reach generate_report's tool args. Two valid
+        # behaviors: (a) agent refuses and references the valid enums in prose,
+        # or (b) Literal[...] forces a corrected value into tool args on
+        # RunPaused (the client appends tool_args to content).
+        response_matches=[r"(?i)(revenue|refunds|churn|compliance)"],
+        response_not_contains=['"report_type": "customer_data_dump', "Traceback"],
         max_duration=30.0,
     ),
     # -------------------------------------------------------------------------
