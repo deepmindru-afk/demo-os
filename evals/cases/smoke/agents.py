@@ -322,8 +322,12 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_type="agent",
         entity_id="scheduler",
         group="agents",
-        prompt="Create a schedule to run the docs agent every day at 9am UTC with the message 'Daily check'",
-        response_matches=[r"(?i)(created|added|scheduled)"],
+        prompt=(
+            "Use the create_schedule tool to schedule the docs agent at cron '0 9 * * *' "
+            "UTC with message 'Daily check'. Don't acknowledge — actually invoke the tool "
+            "and show me the cron expression and the agent endpoint in your reply."
+        ),
+        response_matches=[r"0\s+9\s+\*\s+\*\s+\*", r"(?i)docs"],
         response_not_contains=["Traceback"],
         max_duration=30.0,
     ),
