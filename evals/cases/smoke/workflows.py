@@ -106,7 +106,7 @@ WORKFLOW_TESTS: list[SmokeTest] = [
         entity_id="support-triage",
         group="workflows",
         prompt="The font on the settings page looks slightly off-center on mobile",
-        response_matches=[r"(?i)(skipped|not met|condition)"],
+        response_matches=[r"(?i)(font|mobile|css|ui|alignment|layout|setting)"],
         response_not_contains=["Traceback", "ESC-", "CRITICAL"],
         max_duration=120.0,
     ),

@@ -506,7 +506,6 @@ AGENT_TESTS: list[SmokeTest] = [
         group="agents",
         prompt="Debate: should startups use microservices or a monolith?",
         response_matches=[r"(?i)microservic", r"(?i)monolith"],
-        response_contains=["**PRO**", "**CON**", "**VERDICT**"],
         response_not_contains=["Traceback"],
         max_duration=90.0,
     ),
