@@ -242,6 +242,17 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         max_duration=45.0,
     ),
+    SmokeTest(
+        id="a.7.4",
+        name="reporter \u2014 CSV file generation",
+        entity_type="agent",
+        entity_id="reporter",
+        group="agents",
+        prompt="Generate a CSV file with three rows of sample sales data (columns: date, product, revenue). Use the file generation tool to produce a CSV artifact. Don't ask clarifying questions.",
+        response_matches=[r"(?i)(\.csv|csv\b|file\s*generat|generated)"],
+        response_not_contains=["Traceback"],
+        max_duration=60.0,
+    ),
     # -------------------------------------------------------------------------
     # Contacts (entity memory + relationships)
     # -------------------------------------------------------------------------
@@ -427,6 +438,17 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback", "failed to execute", "exec format error"],
         max_duration=60.0,
     ),
+    SmokeTest(
+        id="a.14.4",
+        name="craftsman — prompt-engineer skill loads",
+        entity_type="agent",
+        entity_id="craftsman",
+        group="agents",
+        prompt="Help me write an effective prompt for summarizing legal contracts.",
+        response_matches=[r"(?i)(prompt|role|context|constraint|example|instruction)"],
+        response_not_contains=["Traceback", "no skill matches", "general assistance"],
+        max_duration=60.0,
+    ),
     # -------------------------------------------------------------------------
     # Multi-Framework — Repo Explainer (Claude Agent SDK)
     # -------------------------------------------------------------------------
@@ -436,8 +458,8 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_type="agent",
         entity_id="claude-repo",
         group="agents",
-        prompt="Summarize the agno-agi/agno repo in 3 bullets.",
-        response_matches=[r"(?i)(agno|agent|framework)"],
+        prompt="Summarize the agno-agi/agno repo in 3 bullets and cite the URLs you used.",
+        response_matches=[r"(?i)(agno|agent|framework)", r"https?://"],
         response_not_contains=["Traceback"],
         max_duration=120.0,
     ),
@@ -452,6 +474,7 @@ AGENT_TESTS: list[SmokeTest] = [
         group="agents",
         prompt="Debate: should startups use microservices or a monolith?",
         response_matches=[r"(?i)microservic", r"(?i)monolith"],
+        response_contains=["**PRO**", "**CON**", "**VERDICT**"],
         response_not_contains=["Traceback"],
         max_duration=90.0,
     ),
@@ -465,7 +488,11 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_id="dspy-math",
         group="agents",
         prompt="A store offers 20% off, then 10% off the discounted price. What is the total discount on a $200 item?",
-        response_matches=[r"(?i)(28|56)"],  # 28% off or $56 saved on $200
+        response_matches=[
+            r"(?i)(28|56)",  # 28% off or $56 saved on $200
+            r"(?m)^1\.",  # numbered reasoning step
+            r"(?i)\*\*Final Answer:\*\*",  # DSPy structured signature output
+        ],
         response_not_contains=["Traceback"],
         max_duration=60.0,
     ),

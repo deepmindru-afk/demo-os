@@ -54,6 +54,16 @@ HITL_TESTS: list[SmokeTest] = [
         response_contains=["ask_user"],
         max_duration=30.0,
     ),
+    SmokeTest(
+        id="h.4.2",
+        name="feedback — free-form fields use get_user_input",
+        entity_type="agent",
+        entity_id="feedback",
+        group="hitl",
+        prompt="Plan a workshop, but first collect my exact city and attendee_count in a form before continuing.",
+        response_contains=["get_user_input"],
+        max_duration=30.0,
+    ),
     # -------------------------------------------------------------------------
     # Approvals — approval gates
     # -------------------------------------------------------------------------
