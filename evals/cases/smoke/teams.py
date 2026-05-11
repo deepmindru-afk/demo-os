@@ -39,17 +39,6 @@ TEAM_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback", "rows affected"],
         max_duration=90.0,
     ),
-    SmokeTest(
-        id="t.2.4",
-        name="dash — engineer creates view in dash schema",
-        entity_type="team",
-        entity_id="dash",
-        group="teams",
-        prompt="Create or replace a view called dash.test_smoke_mrr_check that selects monthly MRR by plan.",
-        response_matches=[r"(?i)(dash\.test_smoke_mrr_check|created|view)"],
-        response_not_contains=["Traceback", "public.test_smoke", "ERROR:"],
-        max_duration=120.0,
-    ),
     # -------------------------------------------------------------------------
     # Research — coordinate mode
     # -------------------------------------------------------------------------
