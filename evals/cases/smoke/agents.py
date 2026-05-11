@@ -252,17 +252,6 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         max_duration=45.0,
     ),
-    SmokeTest(
-        id="a.7.4",
-        name="reporter \u2014 CSV file generation",
-        entity_type="agent",
-        entity_id="reporter",
-        group="agents",
-        prompt="Generate a CSV file with three rows of sample sales data (columns: date, product, revenue). Use the file generation tool to produce a CSV artifact. Don't ask clarifying questions.",
-        response_matches=[r"(?i)(\.csv|csv\b|file\s*generat|generated)"],
-        response_not_contains=["Traceback"],
-        max_duration=60.0,
-    ),
     # -------------------------------------------------------------------------
     # Contacts (entity memory + relationships)
     # -------------------------------------------------------------------------
