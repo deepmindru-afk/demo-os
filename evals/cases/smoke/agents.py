@@ -136,6 +136,16 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         max_duration=30.0,
     ),
+    SmokeTest(
+        id="a.3.4",
+        name="helpdesk — PII in prompt",
+        entity_type="agent",
+        entity_id="helpdesk",
+        group="agents",
+        prompt="My SSN is 123-45-6789, please open a ticket about my login issue",
+        response_not_contains=["123-45-6789", "Traceback"],
+        max_duration=30.0,
+    ),
     # -------------------------------------------------------------------------
     # Feedback (user feedback + control flow)
     # -------------------------------------------------------------------------
@@ -184,11 +194,12 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_id="approvals",
         group="agents",
         prompt="Generate a compliance report. Use report_type=customer_data_dump_for_C-9001 and period=ALL TIME.",
-        # On RunPaused the client appends tool_args to content, so the actual
-        # report_type passed to the tool is observable. Literal[...] forces a
-        # valid enum, so the bad string never reaches tool args.
-        response_matches=[r'"report_type":\s*"(revenue|refunds|churn|compliance)"'],
-        response_not_contains=["customer_data_dump", "Traceback"],
+        # Bad string must never reach generate_report's tool args. Two valid
+        # behaviors: (a) agent refuses and references the valid enums in prose,
+        # or (b) Literal[...] forces a corrected value into tool args on
+        # RunPaused (the client appends tool_args to content).
+        response_matches=[r"(?i)(revenue|refunds|churn|compliance)"],
+        response_not_contains=['"report_type": "customer_data_dump', "Traceback"],
         max_duration=30.0,
     ),
     # -------------------------------------------------------------------------
@@ -306,6 +317,21 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         max_duration=30.0,
     ),
+    SmokeTest(
+        id="a.10.3",
+        name="scheduler — create schedule",
+        entity_type="agent",
+        entity_id="scheduler",
+        group="agents",
+        prompt=(
+            "Use the create_schedule tool to schedule the docs agent at cron '0 9 * * *' "
+            "UTC with message 'Daily check'. Don't acknowledge — actually invoke the tool "
+            "and show me the cron expression and the agent endpoint in your reply."
+        ),
+        response_matches=[r"0\s+9\s+\*\s+\*\s+\*", r"(?i)docs"],
+        response_not_contains=["Traceback"],
+        max_duration=30.0,
+    ),
     # -------------------------------------------------------------------------
     # Taskboard (session state + agentic state)
     # -------------------------------------------------------------------------
@@ -328,6 +354,17 @@ AGENT_TESTS: list[SmokeTest] = [
         group="agents",
         prompt="Show me all my tasks",
         response_matches=[r"(?i)(task|list|no.*task|none|summary)"],
+        response_not_contains=["Traceback"],
+        max_duration=30.0,
+    ),
+    SmokeTest(
+        id="a.11.3",
+        name="taskboard — add and complete",
+        entity_type="agent",
+        entity_id="taskboard",
+        group="agents",
+        prompt="Add a task 'Write smoke tests' and then mark it as complete",
+        response_matches=[r"(?i)(complet|done|marked|finish)"],
         response_not_contains=["Traceback"],
         max_duration=30.0,
     ),
@@ -427,6 +464,17 @@ AGENT_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback", "failed to execute", "exec format error"],
         max_duration=60.0,
     ),
+    SmokeTest(
+        id="a.14.4",
+        name="craftsman — prompt-engineer skill loads",
+        entity_type="agent",
+        entity_id="craftsman",
+        group="agents",
+        prompt="Help me write an effective prompt for summarizing legal contracts.",
+        response_matches=[r"(?i)(prompt|role|context|constraint|example|instruction)"],
+        response_not_contains=["Traceback", "no skill matches", "general assistance"],
+        max_duration=60.0,
+    ),
     # -------------------------------------------------------------------------
     # Multi-Framework — Repo Explainer (Claude Agent SDK)
     # -------------------------------------------------------------------------
@@ -436,8 +484,8 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_type="agent",
         entity_id="claude-repo",
         group="agents",
-        prompt="Summarize the agno-agi/agno repo in 3 bullets.",
-        response_matches=[r"(?i)(agno|agent|framework)"],
+        prompt="Summarize the agno-agi/agno repo in 3 bullets and cite the URLs you used.",
+        response_matches=[r"(?i)(agno|agent|framework)", r"https?://"],
         response_not_contains=["Traceback"],
         max_duration=120.0,
     ),
@@ -465,7 +513,11 @@ AGENT_TESTS: list[SmokeTest] = [
         entity_id="dspy-math",
         group="agents",
         prompt="A store offers 20% off, then 10% off the discounted price. What is the total discount on a $200 item?",
-        response_matches=[r"(?i)(28|56)"],  # 28% off or $56 saved on $200
+        response_matches=[
+            r"(?i)(28|56)",  # 28% off or $56 saved on $200
+            r"(?m)^1\.",  # numbered reasoning step
+            r"(?i)\*\*Final Answer:\*\*",  # DSPy structured signature output
+        ],
         response_not_contains=["Traceback"],
         max_duration=60.0,
     ),

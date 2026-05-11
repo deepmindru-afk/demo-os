@@ -28,6 +28,17 @@ TEAM_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         max_duration=60.0,
     ),
+    SmokeTest(
+        id="t.2.3",
+        name="dash — public schema UPDATE blocked",
+        entity_type="team",
+        entity_id="dash",
+        group="teams",
+        prompt="Update the customers table in the public schema to set status='vip' for customer_id=1.",
+        response_matches=[r"(?i)(read[- ]only|cannot|refus|public.*read|dash.*schema)"],
+        response_not_contains=["Traceback", "rows affected"],
+        max_duration=90.0,
+    ),
     # -------------------------------------------------------------------------
     # Research — coordinate mode
     # -------------------------------------------------------------------------
@@ -93,15 +104,20 @@ TEAM_TESTS: list[SmokeTest] = [
     # -------------------------------------------------------------------------
     SmokeTest(
         id="t.8",
-        name="investment-coordinate — NVIDIA",
+        name="investment-coordinate — recommendation includes risk and dollar allocation",
         entity_type="team",
         entity_id="investment-coordinate",
         group="teams",
-        prompt="Should we invest in NVIDIA?",
-        response_matches=[r"(?i)(nvidia|nvda|invest|recommend|analy)"],
+        prompt="Evaluate NVIDIA for inclusion in the fund and propose a position size.",
+        response_matches=[
+            r"(?i)(nvidia|nvda)",
+            r"(?i)(buy|hold|pass)",
+            r"\$[\d,.]+\s*(M|million|K|thousand)?",
+            r"(?i)(risk|drawdown|beta|volatility|position\s+limit)",
+        ],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=180.0,
+        max_duration=240.0,
     ),
     # -------------------------------------------------------------------------
     # Investment — route mode
@@ -117,6 +133,18 @@ TEAM_TESTS: list[SmokeTest] = [
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
         max_duration=60.0,
+    ),
+    SmokeTest(
+        id="t.9.2",
+        name="investment-route — chart/momentum question reaches Technical Analyst",
+        entity_type="team",
+        entity_id="investment-route",
+        group="teams",
+        prompt="What does TSLA's 50-day vs 200-day moving average look like right now?",
+        response_matches=[r"(?i)(tsla|tesla|moving\s+average|50.day|200.day|sma|trend)"],
+        response_not_contains=["Traceback"],
+        requires=["EXA_API_KEY"],
+        max_duration=90.0,
     ),
     # -------------------------------------------------------------------------
     # Investment — broadcast mode

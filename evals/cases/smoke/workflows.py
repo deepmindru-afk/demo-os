@@ -8,29 +8,42 @@ WORKFLOW_TESTS: list[SmokeTest] = [
     # -------------------------------------------------------------------------
     SmokeTest(
         id="w.1",
-        name="morning-brief — daily briefing",
+        name="morning-brief — five-section daily briefing",
         entity_type="workflow",
         entity_id="morning-brief",
         group="workflows",
         prompt="Generate my morning briefing",
-        response_matches=[r"(?i)(brief|news|summary|today)"],
+        response_matches=[
+            r"(?i)##\s*Today at a Glance",
+            r"(?i)##\s*Priority Actions",
+            r"(?i)##\s*Schedule",
+            r"(?i)##\s*Inbox Highlights",
+            r"(?i)##\s*Industry Pulse",
+        ],
         response_not_contains=["Traceback"],
-        max_duration=120.0,
+        requires=["EXA_API_KEY"],
+        max_duration=180.0,
     ),
     # -------------------------------------------------------------------------
     # AI Research (4 parallel researchers -> synthesize)
     # -------------------------------------------------------------------------
     SmokeTest(
         id="w.2",
-        name="ai-research — AI today",
+        name="ai-research — five-section AI brief",
         entity_type="workflow",
         entity_id="ai-research",
         group="workflows",
         prompt="What's happening in AI today?",
-        response_matches=[r"(?i)(ai|research|model|development)"],
+        response_matches=[
+            r"(?i)##\s*Top Stories",
+            r"(?i)##\s*Models\s*&?\s*Releases",
+            r"(?i)##\s*Products\s*&?\s*Startups",
+            r"(?i)##\s*Infrastructure\s*&?\s*Tools",
+            r"(?i)##\s*Policy\s*&?\s*Industry",
+        ],
         response_not_contains=["Traceback"],
         requires=["EXA_API_KEY"],
-        max_duration=270.0,
+        max_duration=300.0,
     ),
     # -------------------------------------------------------------------------
     # Content Pipeline (parallel + loop + condition)
@@ -84,6 +97,17 @@ WORKFLOW_TESTS: list[SmokeTest] = [
         prompt="The API is returning 500 errors on every request since this morning",
         response_matches=[r"(?i)(error|technical|api|investigat|diagnos)"],
         response_not_contains=["Traceback"],
+        max_duration=120.0,
+    ),
+    SmokeTest(
+        id="w.5.3",
+        name="support-triage — low severity does not escalate",
+        entity_type="workflow",
+        entity_id="support-triage",
+        group="workflows",
+        prompt="The font on the settings page looks slightly off-center on mobile",
+        response_matches=[r"(?i)(font|mobile|css|ui|alignment|layout|setting)"],
+        response_not_contains=["Traceback", "ESC-", "CRITICAL"],
         max_duration=120.0,
     ),
 ]
