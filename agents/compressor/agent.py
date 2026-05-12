@@ -28,7 +28,7 @@ compressor = Agent(
     instructions=INSTRUCTIONS,
     compress_tool_results=True,
     compression_manager=CompressionManager(
-        model=OpenAIResponses(id="gpt-5.5-mini"),
+        model=OpenAIResponses(id="gpt-5.4-mini"),
     ),
     enable_agentic_memory=True,
     add_datetime_to_context=True,
