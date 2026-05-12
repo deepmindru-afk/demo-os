@@ -14,7 +14,7 @@ from agno.agents.dspy import DSPyAgent
 
 from app.settings import agent_db
 
-dspy.configure(lm=dspy.LM("openai/gpt-5.4"))
+dspy.configure(lm=dspy.LM("openai/gpt-5.5"))
 
 
 # ---------------------------------------------------------------------------

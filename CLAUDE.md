@@ -395,7 +395,7 @@ Required:
 - `OPENAI_API_KEY`
 
 Optional (model providers — each enables registry models in Studio):
-- `ANTHROPIC_API_KEY` - Claude Sonnet 4.5, Haiku 4.5 + Reasoner fallback
+- `ANTHROPIC_API_KEY` - Claude Opus 4.7, Sonnet 4.6, Haiku 4.5 + Reasoner fallback
 - `GOOGLE_API_KEY` - Gemini 3 Flash, Gemini 2.5 Pro
 - `GROQ_API_KEY` - Llama 3.3 70B
 - `DEEPSEEK_API_KEY` - DeepSeek Chat, DeepSeek Reasoner
@@ -502,10 +502,10 @@ Optional (tools & integrations):
 
 ```python
 from agno.models.openai import OpenAIResponses
-model = OpenAIResponses(id="gpt-5.4")
+model = OpenAIResponses(id="gpt-5.5")
 
 from agno.models.anthropic import Claude
-model = Claude(id="claude-sonnet-4-5")
+model = Claude(id="claude-sonnet-4-6")
 
 from agno.models.google import Gemini
 model = Gemini(id="gemini-3-flash-preview")

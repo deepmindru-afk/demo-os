@@ -35,7 +35,7 @@ claude_repo = ClaudeAgent(
     description="Explains public GitHub repos using Claude's native web tools.",
     db=agent_db,
     system_prompt=SYSTEM_PROMPT,
-    model="claude-sonnet-4-5",
+    model="claude-sonnet-4-6",
     allowed_tools=["WebSearch", "WebFetch"],
     max_turns=10,
 )

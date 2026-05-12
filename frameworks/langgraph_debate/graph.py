@@ -26,7 +26,7 @@ class DebateState(TypedDict):
 def _llm():
     from langchain_openai import ChatOpenAI
 
-    return ChatOpenAI(model="gpt-5.4")
+    return ChatOpenAI(model="gpt-5.5")
 
 
 def _topic(state: DebateState) -> str:

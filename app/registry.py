@@ -32,6 +32,7 @@ def _get_models() -> list:
 
         models.extend(
             [
+                Claude(id="claude-opus-4-7"),
                 Claude(id="claude-opus-4-6"),
                 Claude(id="claude-sonnet-4-6"),
                 Claude(id="claude-haiku-4-5-20251001"),

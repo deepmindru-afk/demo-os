@@ -18,7 +18,7 @@ reasoner = Agent(
     reasoning_min_steps=2,
     reasoning_max_steps=8,
     tools=[ReasoningTools(add_instructions=True), *get_parallel_tools(), *get_exa_mcp_tools()],
-    fallback_models=[Claude(id="claude-sonnet-4-5")],
+    fallback_models=[Claude(id="claude-sonnet-4-6")],
     instructions=INSTRUCTIONS,
     enable_agentic_memory=True,
     add_datetime_to_context=True,

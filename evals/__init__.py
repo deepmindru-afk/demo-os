@@ -20,7 +20,7 @@ Usage:
 
 from agno.models.openai import OpenAIResponses
 
-JUDGE_MODEL = OpenAIResponses(id="gpt-5.4")
+JUDGE_MODEL = OpenAIResponses(id="gpt-5.5")
 
 CATEGORIES = {
     "security": {
