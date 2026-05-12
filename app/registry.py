@@ -24,7 +24,7 @@ def _get_models() -> list:
     models: list = [
         # OpenAI — always available (OPENAI_API_KEY is required)
         MODEL,
-        OpenAIResponses(id="gpt-5.4-mini"),
+        OpenAIResponses(id="gpt-5.5-mini"),
     ]
 
     if getenv("ANTHROPIC_API_KEY"):
@@ -32,7 +32,7 @@ def _get_models() -> list:
 
         models.extend(
             [
-                Claude(id="claude-opus-4-6"),
+                Claude(id="claude-opus-4-7"),
                 Claude(id="claude-sonnet-4-6"),
                 Claude(id="claude-haiku-4-5-20251001"),
             ]
