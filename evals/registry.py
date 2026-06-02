@@ -26,14 +26,8 @@ class Entity:
 
 ENTITIES: dict[str, Entity] = {
     # -------------------------------------------------------------------------
-    # Agents (14)
+    # Agents (6)
     # -------------------------------------------------------------------------
-    "docs": Entity(
-        id="docs",
-        type="agent",
-        instruction_file="agents/docs/instructions.py",
-        definition_file="agents/docs/agent.py",
-    ),
     "mcp": Entity(
         id="mcp",
         type="agent",
@@ -45,18 +39,6 @@ ENTITIES: dict[str, Entity] = {
         type="agent",
         instruction_file="agents/helpdesk/instructions.py",
         definition_file="agents/helpdesk/agent.py",
-    ),
-    "feedback": Entity(
-        id="feedback",
-        type="agent",
-        instruction_file="agents/feedback/instructions.py",
-        definition_file="agents/feedback/agent.py",
-    ),
-    "approvals": Entity(
-        id="approvals",
-        type="agent",
-        instruction_file="agents/approvals/instructions.py",
-        definition_file="agents/approvals/agent.py",
     ),
     "reasoner": Entity(
         id="reasoner",
@@ -71,23 +53,11 @@ ENTITIES: dict[str, Entity] = {
         definition_file="agents/reporter/agent.py",
         requires=["EXA_API_KEY"],
     ),
-    "contacts": Entity(
-        id="contacts",
-        type="agent",
-        instruction_file="agents/contacts/instructions.py",
-        definition_file="agents/contacts/agent.py",
-    ),
     "studio": Entity(
         id="studio",
         type="agent",
         instruction_file="agents/studio/instructions.py",
         definition_file="agents/studio/agent.py",
-    ),
-    "scheduler": Entity(
-        id="scheduler",
-        type="agent",
-        instruction_file="agents/scheduler/instructions.py",
-        definition_file="agents/scheduler/agent.py",
     ),
     "taskboard": Entity(
         id="taskboard",
@@ -95,26 +65,8 @@ ENTITIES: dict[str, Entity] = {
         instruction_file="agents/taskboard/instructions.py",
         definition_file="agents/taskboard/agent.py",
     ),
-    "compressor": Entity(
-        id="compressor",
-        type="agent",
-        instruction_file="agents/compressor/instructions.py",
-        definition_file="agents/compressor/agent.py",
-    ),
-    "injector": Entity(
-        id="injector",
-        type="agent",
-        instruction_file="agents/injector/instructions.py",
-        definition_file="agents/injector/agent.py",
-    ),
-    "craftsman": Entity(
-        id="craftsman",
-        type="agent",
-        instruction_file="agents/craftsman/instructions.py",
-        definition_file="agents/craftsman/agent.py",
-    ),
     # -------------------------------------------------------------------------
-    # Teams (11)
+    # Teams (6)
     # -------------------------------------------------------------------------
     "dash": Entity(
         id="dash",
@@ -124,27 +76,6 @@ ENTITIES: dict[str, Entity] = {
     ),
     "research-coordinate": Entity(
         id="research-coordinate",
-        type="team",
-        instruction_file="teams/research/instructions.py",
-        definition_file="teams/research/team.py",
-        requires=["EXA_API_KEY"],
-    ),
-    "research-route": Entity(
-        id="research-route",
-        type="team",
-        instruction_file="teams/research/instructions.py",
-        definition_file="teams/research/team.py",
-        requires=["EXA_API_KEY"],
-    ),
-    "research-broadcast": Entity(
-        id="research-broadcast",
-        type="team",
-        instruction_file="teams/research/instructions.py",
-        definition_file="teams/research/team.py",
-        requires=["EXA_API_KEY"],
-    ),
-    "research-tasks": Entity(
-        id="research-tasks",
         type="team",
         instruction_file="teams/research/instructions.py",
         definition_file="teams/research/team.py",

@@ -2,7 +2,7 @@
 
 A reference AgentOS application built with Agno.
 
-This repo packages a broad set of agent patterns into one runnable system: standalone agents, multi-agent teams, scheduled workflows, shared memory, guardrails, approvals, and external integrations. You can run it locally, inspect each example in isolation, and use it as a starting point for your own AgentOS.
+This repo packages a broad set of agent patterns into one runnable system: standalone agents, multi-agent teams, scheduled workflows, shared memory, guardrails, and external integrations. You can run it locally, inspect each example in isolation, and use it as a starting point for your own AgentOS.
 
 The architecture is intentionally simple. Fourteen agents, eleven teams, and five workflows run inside one FastAPI service with PostgreSQL for persistence and shared context. The goal is not to show off a feature checklist. It is to show how agentic systems can be built with ordinary application architecture, clear boundaries, and production-minded patterns.
 
@@ -44,27 +44,19 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 
 | Agent | What it does | Features |
 |-------|-------------|----------|
-| [**Docs**](agents/docs/) | Answers questions about Agno using live documentation | LLMs.txt tools, on-demand fetching |
-| [**MCP**](agents/mcp/) | Queries live Agno docs via MCP server | Model Context Protocol |
+| [**MCP**](agents/mcp/) | Answers questions about Agno via live docs over MCP | MCPTools, Model Context Protocol |
 | [**Helpdesk**](agents/helpdesk/) | IT operations helpdesk with safety guardrails | HITL (confirmation, user input, external execution), PII + injection guardrails, pre/post hooks |
-| [**Feedback**](agents/feedback/) | Planning concierge with structured questions | UserFeedbackTools, UserControlFlowTools |
-| [**Approvals**](agents/approvals/) | Compliance agent gating sensitive operations | @approval decorator, blocking confirmation, audit trail |
 | [**Reasoner**](agents/reasoner/) | Strategic analysis with step-by-step reasoning | ReasoningTools, native reasoning mode, model fallback (Claude) |
 | [**Reporter**](agents/reporter/) | On-demand report generator | FileGenerationTools (CSV/JSON/PDF), CalculatorTools, structured output |
-| [**Contacts**](agents/contacts/) | Relationship intelligence / mini CRM | Entity memory, user profile, session context, LearningMachine |
 | [**Studio**](agents/studio/) | Multimodal media generation and analysis | DalleTools, FalTools, ElevenLabsTools, LumaLabTools, conditional tool loading |
-| [**Scheduler**](agents/scheduler/) | Schedule management for recurring tasks | SchedulerTools (create, list, enable/disable, delete schedules) |
 | [**Taskboard**](agents/taskboard/) | Task management with persistent session state | Session state, agentic state, CRUD tools |
-| [**Compressor**](agents/compressor/) | Web research with tool result compression | CompressionManager, DuckDuckGo, Exa MCP |
-| [**Injector**](agents/injector/) | Configuration queries via dependency injection | RunContext, dependencies, feature flags |
-| [**Craftsman**](agents/craftsman/) | Domain-specific expert guidance via skills | LocalSkills (code-reviewer, api-designer, prompt-engineer) |
 
 ### Teams
 
 | Team | Mode | What it does | Features |
 |------|------|-------------|----------|
 | [**Dash**](agents/dash/) | coordinate | Self-learning data analyst (Analyst + Engineer) | Dual schema, write guard, read-only engine, LearningMachine |
-| [**Research**](teams/research/) | coordinate, route, broadcast, tasks | Research team demonstrating all 4 team modes | ParallelTools, Exa MCP, team mode comparison |
+| [**Research**](teams/research/) | coordinate | Research team (Analyst + Investigator + Writer) | ParallelTools, Exa MCP, multi-specialist synthesis |
 | [**Investment**](teams/investment/) | coordinate, route, broadcast, tasks | 7-agent investment committee using Gemini | Multi-model (Gemini), YFinanceTools, FileTools, LearningMachine |
 
 ### Workflows
@@ -82,25 +74,19 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Feature | Where |
 |---------|-------|
 | RAG / hybrid search | Dash |
-| LLMs.txt tools | Docs |
 | MCP tools | MCP, Dash, AI Research |
-| HITL — confirmation | Helpdesk, Approvals |
-| HITL — user input | Helpdesk, Feedback |
+| HITL — confirmation | Helpdesk |
+| HITL — user input | Helpdesk |
 | HITL — external execution | Helpdesk |
 | Guardrails (PII, injection) | Helpdesk |
 | Pre/post hooks | Helpdesk |
-| Approval — blocking | Approvals |
-| Approval — audit trail | Approvals |
-| User feedback (ask_user) | Feedback |
-| User control flow | Feedback |
+| User feedback (ask_user) | Helpdesk |
 | Reasoning tools | Reasoner |
 | Native reasoning mode | Reasoner |
 | Model fallback | Reasoner |
 | Structured output (Pydantic) | Reporter |
 | File generation (CSV/JSON/PDF) | Reporter |
-| Entity memory | Contacts |
-| User profile | Contacts |
-| Learning (LearningMachine) | Dash, Contacts, Investment |
+| Learning (LearningMachine) | Dash, Investment |
 | SQL tools | Dash |
 | Coding tools | Repo Walkthrough |
 | Image generation (DALL-E) | Studio |
@@ -110,18 +96,15 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Multi-model (Gemini) | Investment |
 | YFinance tools | Investment |
 | Session state + agentic state | Taskboard |
-| Tool result compression | Compressor |
-| Dependency injection (RunContext) | Injector |
-| Skills system (LocalSkills) | Craftsman |
 | Team — coordinate | Dash, Research, Investment |
-| Team — route | Research, Investment |
-| Team — broadcast | Research, Investment |
-| Team — tasks | Research, Investment |
+| Team — route | Investment |
+| Team — broadcast | Investment |
+| Team — tasks | Investment |
 | Workflow — parallel | Morning Brief, AI Research, Content Pipeline |
 | Workflow — loop | Content Pipeline |
 | Workflow — router | Support Triage |
 | Workflow — condition | Support Triage |
-| Scheduling (cron) | Morning Brief, AI Research, Scheduler |
+| Scheduling (cron) | Morning Brief, AI Research |
 | Parallel execution | Morning Brief, AI Research, Content Pipeline |
 | Cross-modal chaining | Repo Walkthrough |
 
@@ -310,7 +293,7 @@ python -m app.main
 |----------|----------|---------|-------------|
 | `OPENAI_API_KEY` | Yes | - | OpenAI API key (GPT-5.4) |
 | `GOOGLE_API_KEY` | No | - | Gemini models for Investment Team |
-| `EXA_API_KEY` | No | - | Web search for Reasoner, Reporter, Contacts, Research, Investment |
+| `EXA_API_KEY` | No | - | Web search for Reasoner, Reporter, Research, Investment |
 | `PARALLEL_API_KEY` | No | - | Parallel web search |
 | `ELEVEN_LABS_API_KEY` | No | - | TTS for Studio, Repo Walkthrough |
 | `FAL_KEY` | No | - | Image-to-image for Studio |
