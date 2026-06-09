@@ -28,6 +28,9 @@ docker compose up -d --build
 # Load SaaS data for Dash
 docker exec -it demo-os-api python -m agents.dash.scripts.load_data
 docker exec -it demo-os-api python -m agents.dash.scripts.load_knowledge
+
+# Seed demo eval data for the Evals page
+docker exec -it demo-os-api python -m evals.scripts.seed_eval_runs
 ```
 
 Confirm the system is running at [http://localhost:8000/docs](http://localhost:8000/docs).
