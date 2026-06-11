@@ -66,8 +66,9 @@ synthesizer = Agent(
 # Create Workflow
 # ---------------------------------------------------------------------------
 ai_research = Workflow(
-    id="ai-research",
-    name="AI Research",
+    id="pulse",
+    name="Pulse",
+    description="Daily AI research — four researchers run in parallel, then synthesize a brief.",
     steps=[
         Parallel(
             Step(name="Models & Releases", agent=models_agent),  # type: ignore[arg-type]

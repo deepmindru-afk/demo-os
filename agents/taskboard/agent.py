@@ -18,8 +18,9 @@ from app.settings import MODEL, agent_db
 # Create Agent
 # ---------------------------------------------------------------------------
 taskboard = Agent(
-    id="taskboard",
-    name="Taskboard",
+    id="pilot",
+    name="Pilot",
+    description="Manages a task list using persistent session state and agentic state.",
     model=MODEL,
     db=agent_db,
     tools=[add_task, update_task_status, list_tasks, remove_task, get_summary],

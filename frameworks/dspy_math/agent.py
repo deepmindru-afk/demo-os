@@ -36,8 +36,8 @@ class WordProblem(dspy.Signature):
 # Create Agent
 # ---------------------------------------------------------------------------
 dspy_math = DSPyAgent(
-    id="dspy-math",
-    name="Math Solver (DSPy)",
+    id="abacus",
+    name="Abacus",
     description="Solves word problems step-by-step using DSPy's ChainOfThought.",
     db=agent_db,
     program=dspy.ChainOfThought(WordProblem),

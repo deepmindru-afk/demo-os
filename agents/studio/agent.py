@@ -38,8 +38,9 @@ if getenv("LUMAAI_API_KEY"):
 # Create Agent
 # ---------------------------------------------------------------------------
 studio = Agent(
-    id="studio",
-    name="Studio",
+    id="iris",
+    name="Iris",
+    description="Multimodal media agent that generates images, audio, and video.",
     model=MODEL,
     db=agent_db,
     tools=tools,

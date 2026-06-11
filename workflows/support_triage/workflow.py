@@ -108,8 +108,9 @@ account_step = Step(name="Account", agent=account_specialist)
 # ---------------------------------------------------------------------------
 
 support_triage = Workflow(
-    id="support-triage",
-    name="Support Triage",
+    id="beacon",
+    name="Beacon",
+    description="Routes support tickets to a specialist and escalates by condition.",
     steps=[
         Step(name="Classify", agent=classifier),
         Router(
