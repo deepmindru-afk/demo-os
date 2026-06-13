@@ -2,7 +2,7 @@
 Context's Provider Registry
 ===========================
 
-Wiring for the context providers available to Context. The structured store (`crm`), the knowledge base (`knowledge`), the workspace, and web are always on; Slack, Gmail, and Calendar are added to the agent when credentials are set.
+Wiring for the context providers available to Context. The structured database (`crm`), the knowledge base (`knowledge`), the workspace, and web are always on; Slack, Gmail, and Calendar are added to the agent when credentials are set.
 
 Each provider exposes at most two tools to the main agent — `query_<id>` and `update_<id>` — so the tool surface stays linear at 2N as sources grow.
 
@@ -33,12 +33,10 @@ from db import SCHEMA, get_readonly_engine, get_sql_engine
 # Workspace root for the always-on filesystem context. Hardcoded to the context repo so @context can answer questions about its own codebase out of the box.
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-# Knowledge-base root — the prose @context files into. Filesystem-backed by default; set WIKI_REPO_URL + WIKI_GITHUB_TOKEN to switch to GitBackend at startup (durable storage with an audit trail).
+# Knowledge-base root - where @context stores files. Filesystem-backed by default; set WIKI_REPO_URL + WIKI_GITHUB_TOKEN to switch to GitBackend at startup for durable storage with an audit trail.
 WIKI_KNOWLEDGE_PATH = REPO_ROOT / "wiki" / "knowledge"
 
-# Tools that act on the outside world as the owner. agents.context flags these
-# requires_confirmation per run, so the model can never execute one without the
-# owner approving the paused run first.
+# Tools that take action in the outside world as the owner. `agents.context` flags these `requires_confirmation` per run, so the model can never execute one without the owner's explicit approval.
 ACT_TOOLS: frozenset[str] = frozenset({"update_gmail", "update_calendar"})
 
 
@@ -52,10 +50,7 @@ context_providers: list[ContextProvider] = []
 def create_context_providers() -> list[ContextProvider]:
     """Build the registered context providers from env and cache them.
 
-    Optional builders are wrapped in try/except so one bad config doesn't take
-    the whole registry down. (Agent-side tool registration drops duplicate
-    tool names with a warning, so a copy-pasted provider id can't produce two
-    ``query_<id>`` tools.)
+    Optional builders are wrapped in try/except so one bad config doesn't take the whole registry down.
     """
     configured: list[ContextProvider] = [
         _create_web_provider(),
@@ -85,7 +80,7 @@ def get_context_providers() -> list[ContextProvider]:
 
 
 async def _gather_provider_calls(providers: list[ContextProvider], method: str) -> None:
-    """Run ``method`` on every provider concurrently, logging failures."""
+    """Run `method` on every provider concurrently, logging failures."""
     results = await asyncio.gather(*(getattr(p, method)() for p in providers), return_exceptions=True)
     for provider, outcome in zip(providers, results, strict=True):
         if isinstance(outcome, BaseException):
@@ -105,7 +100,7 @@ async def close_context_providers() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Provider factories
+# Context Providers
 # ---------------------------------------------------------------------------
 
 
@@ -121,11 +116,9 @@ def _create_workspace_provider() -> WorkspaceContextProvider:
 
 
 def _create_crm_provider() -> DatabaseContextProvider:
-    """The CRM — the structured store, read + write over the ``context`` schema.
+    """The CRM — the structured database, read + write over the `context` schema.
 
-    Two engines so the read path never sees the write engine. Tuned
-    instructions know the managed table shape (projects/meetings/reminders/
-    notes/contacts), rendered from the schema spec.
+    The tuned instructions know the managed table shape (projects/meetings/reminders/notes/contacts), rendered from the schema spec.
     """
     return DatabaseContextProvider(
         id="crm",
@@ -140,15 +133,9 @@ def _create_crm_provider() -> DatabaseContextProvider:
 
 
 def _create_knowledge_wiki() -> WikiContextProvider:
-    """The knowledge base — read + write prose, organized folder-per-spec.
+    """The knowledge base — read + write knowledge, organized folder-per-spec.
 
-    Tuned instructions teach the sub-agents the specs convention (root
-    README index, ``_template/`` folder layout) so a spec is read as one
-    coherent unit and writes land in the right sub-file. Filesystem-backed
-    by default. Set ``WIKI_REPO_URL`` AND ``WIKI_GITHUB_TOKEN`` — ideally
-    pointing at your specs repo — to switch to ``GitBackend`` for durable
-    storage with an audit trail. Optional knobs: ``WIKI_BRANCH`` (default
-    ``main``), ``WIKI_LOCAL_PATH``.
+    Filesystem-backed by default. Set `WIKI_REPO_URL` AND `WIKI_GITHUB_TOKEN` — ideally pointing at your specs repo — to switch to `GitBackend` for durable storage with an audit trail. Optional knobs: `WIKI_BRANCH` (default `main`), `WIKI_LOCAL_PATH`.
     """
     repo_url = getenv("WIKI_REPO_URL", "").strip()
     github_token = getenv("WIKI_GITHUB_TOKEN", "").strip()

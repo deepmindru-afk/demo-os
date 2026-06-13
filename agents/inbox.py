@@ -1,27 +1,15 @@
 """
-The Inbound Alter-Ego Queue
+The Inbound Queue
 ===========================
 
-The push side of Context: the world leaves the owner updates; the owner reads
-and clears them. Three deterministic tools over ``context.updates`` — code, not
-prompt, enforces the asymmetry (see ``docs/SECURITY.md``).
+Let your teammates (and their agents) leave you non-urgent updates.
 
-- ``submit_update`` — **everyone's** capture tool (the *only* tool a guest
-  gets). Append-only write to the owner's queue. ``from_person`` is taken from
-  the verified identity, never a model argument, so a caller can't spoof who an
-  update is from. No readback — you can drop a note in the owner's inbox, you
-  can't read it.
-- ``rundown`` — **owner-only.** Everything awaiting the owner: every update
-  they haven't acknowledged, grouped blocked → done → in progress. Shows them
-  and advances ``new → briefed``, stamping ``briefed_at``.
-- ``acknowledge`` — **owner-only.** Moves updates to ``acknowledged`` (stamping
-  ``acknowledged_at``) so they drop off the rundown. Only the owner moves the
-  ack axis — and that falls out of the toolset for free (a guest never
-  holds these tools).
+Three tools for managing your inbound queue:
+- `submit_update` — the only tool a guest user can use. Append-only write to the owner's queue. `from_person` is taken from the verified identity so a caller can't spoof who an update is from. No readback — you can drop a note in the owner's inbox, you can't read it.
+- `rundown` — owner-only. Everything awaiting the owner: every update they haven't acknowledged, grouped blocked → done → in progress. Shows them and advances `new → briefed`, stamping `briefed_at`.
+- `acknowledge` — owner-only. Moves updates to `acknowledged` (stamping `acknowledged_at`) so they drop off the rundown. Only the owner moves the ack axis — and that falls out of the toolset for free (a guest never holds these tools).
 
-The owner-only tools also self-check ``is_owner`` and raise ``StopAgentRun`` —
-redundant behind the toolset gate + the tool_hook in ``agents.policy``, but
-cheap defense in depth.
+The owner-only tools also check `is_owner` and raise `StopAgentRun` — redundant behind the toolset gate + the tool_hook in `agents.policy`, but a cheap defense none the less.
 """
 
 from collections.abc import Sequence
@@ -115,7 +103,7 @@ def submit_update(
     work_status: str = "done",
     tags: list[str] | None = None,
 ) -> str:
-    """File an update in the owner's inbound queue.
+    """Save an update in the owner's inbound queue.
 
     Use this to pass the owner a message from someone else — "tell them I fixed
     the auth bug", "the report is ready", "I'm blocked on the API key". The

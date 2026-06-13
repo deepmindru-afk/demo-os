@@ -104,18 +104,14 @@ The main agent file is [`agents/context.py`](agents/context.py). `context_tools(
 Same with `caller_information()`, which adds the instructions to the agent based on the caller's role.
 
 There are also a few other agent files that are worth reviewing:
-- [`agents/instructions.py`](agents/instructions.py) — the instructions for the agent.
-- [`agents/sources.py`](agents/sources.py) — the context providers (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
+- [`agents/instructions.py`](agents/instructions.py) defines the instructions for the agent based on the caller's role (owner vs guest).
+- [`agents/sources.py`](agents/sources.py) defines the context providers available to the agent (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
+- [`agents/inbox.py`](agents/inbox.py) defines the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
+- [`agents/policy.py`](agents/policy.py) defines the defense-in-depth hooks that enforce the owner/guest boundary.
 
+## Add a context provider
 
-4. [`agents/inbox.py`](agents/inbox.py) — the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
-5. [`agents/policy.py`](agents/policy.py) — the defense-in-depth hooks that enforce the owner/guest boundary.
-6. .
-7. [`agents/inbox.py`](agents/inbox.py) — the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
-
-## Add a source
-
-A source is a `ContextProvider`. Wire one in [`agents/sources.py`](agents/sources.py): write a `_create_<id>_provider()` factory and add it to `create_context_providers()`. It exposes `query_<id>` (and `update_<id>` if writable) to the agent automatically — no other changes needed.
+A context provider is a `ContextProvider`. Wire one in [`agents/sources.py`](agents/sources.py): write a `_create_<id>_provider()` factory and add it to `create_context_providers()`. It exposes `query_<id>` (and `update_<id>` if writable) to the agent automatically — no other changes needed.
 
 Agno ships providers for web, workspace, database, wiki, MCP, Gmail, Calendar, Google Drive, Slack, and the filesystem. To wrap something it doesn't cover, subclass `agno.context.provider.ContextProvider`.
 
