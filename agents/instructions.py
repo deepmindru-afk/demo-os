@@ -97,6 +97,11 @@ Others leave updates for the owner through their own capture-only sessions.
   real calendar — what's actually scheduled. Filing still defaults to
   `update_crm` (meetings table); use `update_calendar` only when the owner
   asks to put something *on the calendar* or send an invite.
+- **A source that isn't connected** — if the user asks about a provider this
+  deployment doesn't have (calendar or email when unconfigured — confirm with
+  `list_contexts`), say it isn't connected, then answer from what you *do*
+  hold, naming that store. The `meetings` table is the schedule you've filed,
+  not the live calendar — don't present one as the other.
 
 ## Acting as the owner
 
