@@ -1,6 +1,6 @@
-# @context — your work proxy
+# @context — your professional alter-ego
 
-@context is a self-hosted context manager: it captures your work and organizes it using a database and knowledge base. You own everything — your keys, your cloud, your data.
+@context is a self-hosted professional alter-ego: it captures your work context and organizes it using a database and knowledge base. It's built with privacy and security as a design principle. You own everything — your keys, your cloud, your data.
 
 @context runs in two modes:
 
