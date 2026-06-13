@@ -107,17 +107,21 @@ There are also a few other agent files that are worth reviewing:
 - [`agents/instructions.py`](agents/instructions.py) defines the instructions for the agent based on the caller's role (owner vs guest).
 - [`agents/sources.py`](agents/sources.py) defines the context providers available to the agent (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
 - [`agents/inbox.py`](agents/inbox.py) defines the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
-- [`agents/policy.py`](agents/policy.py) defines the defense-in-depth hooks that enforce the owner/guest boundary.
+- [`agents/policy.py`](agents/policy.py) defines the pre-hook and tool-hook that enforce the owner/guest boundary.
 
-## Add a context provider
+### The skills
 
-A context provider is a `ContextProvider`. Wire one in [`agents/sources.py`](agents/sources.py): write a `_create_<id>_provider()` factory and add it to `create_context_providers()`. It exposes `query_<id>` (and `update_<id>` if writable) to the agent automatically — no other changes needed.
-
-Agno ships providers for web, workspace, database, wiki, MCP, Gmail, Calendar, Google Drive, Slack, and the filesystem. To wrap something it doesn't cover, subclass `agno.context.provider.ContextProvider`.
+Skills are reusable workflows that @context can run in a somewhat deterministic manner. They are defined in the `skills/` folder and it's recommended to add your own skills as needed.
+- [`skills/week-plan.md`](skills/week-plan.md) — the week plan skill.
+- [`skills/daily-rundown.md`](skills/daily-rundown.md) — the daily rundown skill.
+- [`skills/prep-for.md`](skills/prep-for.md) — the prep for skill.
+- [`skills/process-today.md`](skills/process-today.md) — the process today skill.
 
 ## Run in production
 
-Run anywhere that takes a container. For the lightest lift, one-command Railway scripts ship with the repo. Requires the [Railway CLI](https://docs.railway.com/cli#installing-the-cli) and `railway login`.
+You can run @context anywhere that runs a docker container. For the lightest lift, the codebase comes with a deploy-to-railway script that runs @context as a service with Postgres on the same private network. It uses the credentials set in `.env.production` — `OWNER_ID` included and also creates a public domain for you, that you can connect to in the AgentOS UI.
+
+> Requires the [Railway CLI](https://docs.railway.com/cli#installing-the-cli) and `railway login`.
 
 ### 1. Production env
 
@@ -134,8 +138,6 @@ The one setting that makes the deploy *yours* is `OWNER_ID` — every identity t
 # .env.production
 OWNER_ID=owner@example.com
 ```
-
-**Without `OWNER_ID`, @context is capture-only for everyone** (it fails closed — nobody is the owner). The first entry is canonical: the identity your inbound queue is keyed under.
 
 ### 2. Deploy
 
