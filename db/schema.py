@@ -73,6 +73,7 @@ TABLES = [
             Column("due_at", "TIMESTAMPTZ"),
             Column("status", "TEXT", "NOT NULL DEFAULT 'pending'", hint="pending/done/dropped"),
             Column("tags", "TEXT[]", "NOT NULL DEFAULT '{}'"),
+            Column("notified_at", "TIMESTAMPTZ", hint="set by the reminder sweep when surfaced; leave null"),
         ],
     ),
     Table(
@@ -131,6 +132,14 @@ def create_tables() -> None:
         )
         body = ",\n    ".join(columns)
         statements.append(f"CREATE TABLE IF NOT EXISTS {SCHEMA}.{table.name} (\n    {body}\n)")
+        # Bring an already-created table up to the current declaration: any
+        # column added to TABLES later lands here via ADD COLUMN IF NOT EXISTS
+        # (a no-op for columns that already exist). Keeps TABLES the single
+        # source of truth without a separate migration. New NOT NULL columns
+        # need a DEFAULT to apply cleanly to a populated table.
+        for c in table.columns:
+            coldef = " ".join(filter(None, (c.name, c.type, c.modifiers)))
+            statements.append(f"ALTER TABLE {SCHEMA}.{table.name} ADD COLUMN IF NOT EXISTS {coldef}")
 
     with get_sql_engine().begin() as conn:
         for statement in statements:

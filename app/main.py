@@ -9,6 +9,7 @@ from pathlib import Path
 
 from agno.os import AgentOS
 from agno.os.config import AuthorizationConfig
+from agno.scheduler import ScheduleManager
 from agno.utils.log import log_info, log_warning
 
 from agents.context import context
@@ -16,6 +17,41 @@ from agents.sources import close_context_providers, setup_context_providers
 from app.identity import owner_configured
 from app.settings import is_prd, runtime_env
 from db import create_tables, get_postgres_db
+
+# One database handle, shared by AgentOS persistence and the scheduler.
+db = get_postgres_db()
+
+
+def register_schedules() -> None:
+    """Register @context's background schedules (idempotent — safe on every boot).
+
+    The scheduler poller (`scheduler=True`) fires each due job against an HTTP
+    endpoint; AgentOS authenticates those triggers with the internal service
+    token, so the runs arrive as the `__scheduler__` identity that `is_owner`
+    honors — i.e. on the owner surface. A failure here must not take startup
+    down, so it degrades to a warning.
+
+    - fire-due-reminders: every morning, the owner-surface run calls
+      `fire_due_reminders`, which sweeps `context.reminders` for anything now
+      due and drops it into the inbound queue (see `agents/reminders.py`).
+    """
+    try:
+        ScheduleManager(db).create(
+            name="fire-due-reminders",
+            cron="0 8 * * *",  # 08:00 UTC daily
+            endpoint="/agents/context/runs",
+            payload={
+                "message": (
+                    "Scheduled reminder sweep: call `fire_due_reminders` to surface any "
+                    "reminders that have come due, then reply with the one-line summary it returns."
+                )
+            },
+            description="Daily sweep: surface due reminders into the owner's inbound queue.",
+            if_exists="update",
+        )
+        log_info("@context: registered schedule 'fire-due-reminders'")
+    except Exception as exc:
+        log_warning(f"@context: could not register schedules: {exc}")
 
 # ---------------------------------------------------------------------------
 # Environment
@@ -61,6 +97,7 @@ if SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET:
 async def lifespan(app):  # type: ignore[no-untyped-def]
     log_info("@context: startup")
     create_tables()
+    register_schedules()
     await setup_context_providers()
     try:
         yield
@@ -76,7 +113,7 @@ agent_os = AgentOS(
     tracing=True,
     scheduler=True,
     lifespan=lifespan,
-    db=get_postgres_db(),
+    db=db,
     agents=[context],
     interfaces=interfaces,
     config=str(Path(__file__).parent / "config.yaml"),  # Quick prompts for the agents.
