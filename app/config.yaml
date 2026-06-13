@@ -2,5 +2,5 @@ chat:
   quick_prompts:
     context:
       - "Met Kyle from Agno, wants a partnership. Follow up next week"
-      - "What's my week look like?"
+      - "What does my week look like?"
       - "Let kyle@agno know @context is awesome"

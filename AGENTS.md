@@ -86,7 +86,9 @@ cp example.env .env
 docker compose up -d --build
 ```
 
-Hot-reload watches `agents/`, `app/`, `db/`. Edits land in <2s. `compose.yaml` sets `RUNTIME_ENV=dev`, `AGNO_DEBUG=True`, `WAIT_FOR_DB=True`, `OWNER_ID=owner@context.local,anon`, and a cosmetic `OWNER_NAME=Owner` — so JWT is off, the API blocks on the DB before serving, and the unauthenticated local caller (`user_id` defaults to the agent's `anon` sentinel) is treated as the owner out of the box. Pass any other `user_id` to exercise the guest (capture-only) path.
+Hot-reload watches `agents/`, `app/`, `db/`, and `skills/`. Edits land in <2s. `compose.yaml` sets `RUNTIME_ENV=dev`, `AGNO_DEBUG=True`, and `WAIT_FOR_DB=True` — so JWT is off and the API blocks on the DB before serving.
+
+The intended path is to set `OWNER_ID` to your email (the one you sign in to os.agno.com with) in `.env`; the AgentOS UI then sends it as your verified identity and you get the owner surface. As a fallback for runs that carry *no* identity — the eval suite, the odd unauthenticated `curl` — compose defaults `OWNER_ID` to `my@email.com,anon` with a cosmetic `OWNER_NAME=Me`, so the `anon` sentinel that agno assigns an unauthenticated local caller resolves to the owner. That keyless-local-as-owner shortcut is a test convenience, **not** a supported way to run the product. A `.env` `OWNER_ID` overrides the compose default entirely (drop `anon` unless you want keyless callers on the owner surface). Any non-owner `user_id` exercises the guest (capture-only) path.
 
 ### Format & Validate
 
@@ -112,7 +114,7 @@ CI installs the same pinned `requirements.txt`, adds a `ruff format --check` gat
 
 A "source" is a `ContextProvider`. Wire one in [`agents/sources.py`](agents/sources.py): write a `_create_<id>_provider()` factory and add it to `create_context_providers()`. Always-on providers go in the `configured` list directly; env-gated ones go through the `try/except` loop so one bad config can't take the registry down. Each provider exposes `query_<id>` (and `update_<id>` if writable) to the main agent automatically — no change to `context.py` needed.
 
-Agno ships providers for web, workspace, database, wiki (FileSystem/Git), MCP, gdrive, slack, and fs. To wrap something Agno doesn't cover, subclass `agno.context.provider.ContextProvider`.
+Agno ships providers for web, workspace, database, wiki (FileSystem/Git), MCP, gmail, calendar, gdrive, slack, and fs. To wrap something Agno doesn't cover, subclass `agno.context.provider.ContextProvider`.
 
 If a provider needs a model, reuse `default_model()` so the model id stays in one place.
 
