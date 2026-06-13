@@ -8,6 +8,8 @@ metadata:
 ---
 # Daily Rundown
 
+> _**Runtime skill** — a playbook the deployed @context agent runs for its owner, invoked in natural language. Not a coding-agent workflow; those live in [`.agents/skills/`](../../.agents/skills/)._
+
 A focused **today** brief that pulls from two places and stitches them into one
 short digest. Read-only assembly — it never files anything.
 

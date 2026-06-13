@@ -8,6 +8,8 @@ metadata:
 ---
 # Process Today
 
+> _**Runtime skill** — a playbook the deployed @context agent runs for its owner, invoked in natural language. Not a coding-agent workflow; those live in [`.agents/skills/`](../../.agents/skills/)._
+
 Turn today's raw activity into filed context. Unlike the read-only playbooks,
 this one **writes** — it ends in `update_crm` / `update_knowledge` calls, not
 just a summary. It still never acts on the outside world: no mail, no calendar

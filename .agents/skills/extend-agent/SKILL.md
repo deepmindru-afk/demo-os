@@ -5,6 +5,8 @@ description: User-driven loop to change the context agent (or any agent in this 
 
 # Extend an Agent
 
+> _**Coding-agent workflow** — a `/slash-command` your coding agent (Claude Code, Codex, …) runs while developing this repo. Not a runtime skill the deployed @context agent runs; those live in [`skills/`](../../../skills/)._
+
 You are recursively extending a target agent **with the user in the driver's seat**. Each iteration: the user names a change, you implement it with an Agno-aware eye (using the `agno-docs` MCP for any toolkit / API research), the change is verified against the live agent, then you ask if there's more to do. Stop when the user says they're done.
 
 This is the user-driven half of the iteration loop. The autonomous half lives in the `improve-agent` skill — Claude derives probes from the agent's `INSTRUCTIONS` and hardens behavior with no user input. Use this skill to *change* the agent (add tools, add capabilities, refine the prompt, fix a known bug). Run `improve-agent` afterward to confirm nothing else regressed.

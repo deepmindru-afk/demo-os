@@ -8,6 +8,8 @@ metadata:
 ---
 # Week Plan
 
+> _**Runtime skill** — a playbook the deployed @context agent runs for its owner, invoked in natural language. Not a coding-agent workflow; those live in [`.agents/skills/`](../../.agents/skills/)._
+
 Assemble a clear plan for the **next 7 days** from the structured `crm`
 store, enriched from the connected sources. This is a read-only retrieval
 workflow: it pulls, merges, and formats — it never writes anything.

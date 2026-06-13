@@ -55,7 +55,7 @@ Shared:
 | [`agents/inbox.py`](agents/inbox.py) | The inbound queue — `submit_update` (everyone), `rundown` / `acknowledge` (owner-only). |
 | [`agents/policy.py`](agents/policy.py) | Defense-in-depth hooks — `normalize_identity` (pre) + `enforce_capture_only` (tool). |
 | [`skills/`](skills/) | Runtime skills — owner-only playbooks, one `SKILL.md` per folder (`week-plan`, `daily-rundown`, `prep-for`, `process-today`). Loaded + owner-gated by `context.py`; the agent uses them via progressive disclosure. |
-| [`.agents/skills/`](.agents/skills/) | Dev-time skills for *coding* agents (`extend-agent`, `improve-agent`, `eval-and-improve`, `review-and-improve`). `.claude/skills` is a committed symlink here — see "Working with coding agents". |
+| [`.agents/skills/`](.agents/skills/) | Dev-time **coding-agent workflows** (`extend-agent`, `improve-agent`, `eval-and-improve`, `review-and-improve`) — slash commands coding agents run *on this repo*, distinct from the runtime skills above. `.claude/skills` is a committed symlink here — see "Working with coding agents". |
 | [`db/schema.py`](db/schema.py) | Single source for the structured store — `TABLES` renders the DDL (`create_tables()`, run at startup) *and* the agent's table-awareness. |
 | [`db/session.py`](db/session.py) | Two engines (write-guarded + read-only) + `get_postgres_db()` for agno persistence. |
 | [`db/url.py`](db/url.py) | Builds the database URL from env. |
@@ -120,7 +120,7 @@ If a provider needs a model, reuse `default_model()` so the model id stays in on
 
 ### Adding a skill (runtime playbook, owner-only)
 
-A "skill" is a reusable **playbook** the owner can invoke — a named, versioned procedure layered over the provider tools (`week-plan`, `daily-rundown`, `prep-for`, `process-today`). These are *runtime* skills for the `context` agent's owner; don't confuse them with the dev-time skills in `.agents/skills/`, which drive *coding* agents against this repo.
+A "skill" is a reusable **playbook** the owner can invoke — a named, versioned procedure layered over the provider tools (`week-plan`, `daily-rundown`, `prep-for`, `process-today`). These are *runtime* skills for the `context` agent's owner; don't confuse them with the **coding-agent workflows** in `.agents/skills/`, which drive *coding* agents against this repo.
 
 Drop a folder in [`skills/`](skills/): `skills/<name>/SKILL.md` with YAML frontmatter (`name` must equal the folder name, plus a trigger-rich `description`) and a markdown body that *is* the instructions. Optional `scripts/` and `references/` subdirs are auto-discovered. Agno's `LocalSkills` loader validates on startup (lowercase-hyphenated name, name == dir); the agent then exposes three access tools — `get_skill_instructions` / `get_skill_reference` / `get_skill_script` — with progressive disclosure, so only each skill's name + description sit in the prompt until the model loads one. **No change to `context.py` is needed — it loads every folder in `skills/`.** In dev, adding or editing a `SKILL.md` hot-reloads.
 
@@ -142,9 +142,9 @@ This repo is a single-agent product, but you can still register more agents: cre
 
 ## Working with coding agents
 
-Dev-time skills live in [`.agents/skills/`](.agents/skills/) — the vendor-neutral home for coding-agent assets, mirroring how `CLAUDE.md` symlinks to `AGENTS.md`. `.claude/skills` is a committed symlink into it, so Claude Code picks the skills up on every clone with no setup step; other harnesses (Codex, Cursor, …) can symlink the same folder. (Windows needs developer mode or `core.symlinks=true` for the symlink to materialize.) Claude-specific config like `.claude/settings.json` stays a real file in `.claude/`.
+Dev-time **coding-agent workflows** live in [`.agents/skills/`](.agents/skills/) — the vendor-neutral home for coding-agent assets, mirroring how `CLAUDE.md` symlinks to `AGENTS.md`. `.claude/skills` is a committed symlink into it, so Claude Code picks the skills up on every clone with no setup step; other harnesses (Codex, Cursor, …) can symlink the same folder. (Windows needs developer mode or `core.symlinks=true` for the symlink to materialize.) Claude-specific config like `.claude/settings.json` stays a real file in `.claude/`.
 
-The skills cover the agent-development lifecycle against the `context` agent:
+These workflows cover the agent-development lifecycle against the `context` agent:
 
 - **`/extend-agent`** — you drive. Add a source, refine `CONTEXT_INSTRUCTIONS`, fix a known bug. Uses the `agno-docs` MCP for grounded toolkit research.
 - **`/improve-agent`** — Claude drives. Derives probes from the agent's `INSTRUCTIONS`, judges, edits, re-runs. No user input needed.

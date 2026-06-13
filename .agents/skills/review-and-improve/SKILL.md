@@ -5,6 +5,8 @@ description: Repo-wide consistency sweep for @context — diff docs against code
 
 # Review and Improve
 
+> _**Coding-agent workflow** — a `/slash-command` your coding agent (Claude Code, Codex, …) runs while developing this repo. Not a runtime skill the deployed @context agent runs; those live in [`skills/`](../../../skills/)._
+
 You are sweeping the whole repo for public-consumption readiness — docs accuracy, the context agent reachable end to end, scripts that actually do what the docs claim, no stale env vars, format + validate clean. Most drift is mechanical (renamed file, missing entry in `example.env`, a provider missing from the architecture diagram) and you fix it in place. The rest is a punch list you surface to the user.
 
 This is a **recurring sweep** — meant to be re-run regularly. On a clean repo it ends with "no diffs"; on a dirty one it brings everything back to coherent.
@@ -94,7 +96,7 @@ curl -s http://localhost:8000/agents | jq -r '.[].id' | sort
 
 If the list doesn't match the slugs in `agents=[...]`, flag it — Step 4 will be testing the wrong code. Common causes: the container is bound to a different repo path, or `docker compose restart` is needed. Stop and surface to the user.
 
-For each agent registered in `app/main.py`, hit it with one of its `quick_prompts`. **Identity decides the surface on `context`:** compose treats `owner@example.com` (and the `anon` default) as the owner, so owner-path probes must send that id — a made-up `user_id` would smoke the capture-only non-owner surface instead. (An `OWNER_ID` set in `.env` replaces the compose default entirely — check `.env` first and probe with that id instead.) Probe both: the owner path with a quick prompt, and the boundary with any other id (expect a polite capture-only reply, no data readback). The probes don't share state, so fire them concurrently (background the cURLs) and collect the results:
+For each agent registered in `app/main.py`, hit it with one of its `quick_prompts`. **Identity decides the surface on `context`:** compose treats `owner@example.com` (and the `anon` default) as the owner, so owner-path probes must send that id — a made-up `user_id` would smoke the capture-only guest surface instead. (An `OWNER_ID` set in `.env` replaces the compose default entirely — check `.env` first and probe with that id instead.) Probe both: the owner path with a quick prompt, and the boundary with any other id (expect a polite capture-only reply, no data readback). The probes don't share state, so fire them concurrently (background the cURLs) and collect the results:
 
 ```bash
 curl -sS -X POST http://localhost:8000/agents/<slug>/runs \

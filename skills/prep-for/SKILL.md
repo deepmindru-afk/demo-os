@@ -8,6 +8,8 @@ metadata:
 ---
 # Prep For
 
+> _**Runtime skill** — a playbook the deployed @context agent runs for its owner, invoked in natural language. Not a coding-agent workflow; those live in [`.agents/skills/`](../../.agents/skills/)._
+
 Pull together a tight pre-meeting brief on a **subject** — a person, company, or
 project the owner is about to engage. Read-only: gather and synthesize, never
 file.

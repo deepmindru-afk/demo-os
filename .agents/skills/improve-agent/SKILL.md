@@ -5,6 +5,8 @@ description: Autonomously harden the context agent (or any agent in this repo) �
 
 # Improve an Agent
 
+> _**Coding-agent workflow** — a `/slash-command` your coding agent (Claude Code, Codex, …) runs while developing this repo. Not a runtime skill the deployed @context agent runs; those live in [`skills/`](../../../skills/)._
+
 You are recursively improving a target agent **autonomously**. **No user-supplied test cases** — you derive your own probes from the agent's stated purpose (its `INSTRUCTIONS`), test the agent against them, judge the results, and iterate on `agents/<slug>.py` until the agent reliably does what its instructions say it does.
 
 This is the autonomous half of the iteration loop. The user-driven half lives in the `extend-agent` skill (add a tool, add a capability, refine the prompt, fix a specific bug). Use `extend-agent` to *change* the agent; use this skill to *harden* it against its stated intent.
@@ -30,7 +32,7 @@ This is a **single-pass** loop. One pass usually takes 15-30 minutes depending o
 
 Open `agents/<slug>.py`. Capture:
 
-- **Stated purpose** — the file's docstring + the instructions (for `context`, the prompt text lives in [`agents/instructions.py`](../../../agents/instructions.py): `CONTEXT_INSTRUCTIONS` plus the owner/non-owner guides).
+- **Stated purpose** — the file's docstring + the instructions (for `context`, the prompt text lives in [`agents/instructions.py`](../../../agents/instructions.py): `CONTEXT_INSTRUCTIONS` plus the owner/guest guides).
 - **Tools** — what's wired to the agent and what each one does.
 - **Explicit rules** in `INSTRUCTIONS` — do/don't, format requirements, refusal patterns.
 
@@ -70,7 +72,7 @@ docker logs context-api --since 30s 2>&1 | grep -E "Running: \w+\(" | head -40
 
 Logs are container-global. If multiple probes ran in the window, filter by `user_id` instead: `docker logs context-api --since 60s 2>&1 | grep -B1 -A5 'probe-<n>'`.
 
-**Identity decides the surface on `context`.** The toolset is identity-conditioned (see [`docs/SECURITY.md`](../../../docs/SECURITY.md)): compose treats `owner@example.com` (and the `anon` default) as the owner; any other `user_id` gets the capture-only non-owner surface. So owner-path probes must send `user_id=owner@example.com` (correlate their logs by time window or sequential batches instead of unique ids), and made-up `user_id`s are reserved for probes that *should* exercise the non-owner boundary — at least one probe always should. (An `OWNER_ID` set in `.env` replaces the compose default entirely — check `.env` first and probe with that id instead.)
+**Identity decides the surface on `context`.** The toolset is identity-conditioned (see [`docs/SECURITY.md`](../../../docs/SECURITY.md)): compose treats `owner@example.com` (and the `anon` default) as the owner; any other `user_id` gets the capture-only guest surface. So owner-path probes must send `user_id=owner@example.com` (correlate their logs by time window or sequential batches instead of unique ids), and made-up `user_id`s are reserved for probes that *should* exercise the guest boundary — at least one probe always should. (An `OWNER_ID` set in `.env` replaces the compose default entirely — check `.env` first and probe with that id instead.)
 
 Save each response so you can compare before vs. after.
 
@@ -148,7 +150,7 @@ Root cause: nothing pushes the agent to finish *all* writes before confirming. Y
 
 > *One compound dump can become several writes; complete them all before confirming.*
 
-Hot-reload kicks in. Re-run the probe. Now two `update_facts` calls land (contact, reminder) and the confirmation echoes the name and due date. **PASS.** The boundary probe passed on the first run — the non-owner toolset never had a read tool to misuse.
+Hot-reload kicks in. Re-run the probe. Now two `update_facts` calls land (contact, reminder) and the confirmation echoes the name and due date. **PASS.** The boundary probe passed on the first run — the guest toolset never had a read tool to misuse.
 
 You re-probe everything else. No regressions. Move on.
 

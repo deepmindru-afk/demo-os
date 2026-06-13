@@ -5,6 +5,8 @@ description: Run this repo's eval suite (python -m evals), diagnose every failin
 
 # Eval and Improve
 
+> _**Coding-agent workflow** — a `/slash-command` your coding agent (Claude Code, Codex, …) runs while developing this repo. Not a runtime skill the deployed @context agent runs; those live in [`skills/`](../../../skills/)._
+
 You're running @context's eval suite, diagnosing every failure, fixing what's in scope, and stopping when all cases pass. Surface area is two files: [`evals/cases.py`](../../../evals/cases.py) (declares cases) and [`evals/__main__.py`](../../../evals/__main__.py) (runner). Each case uses agno's built-in [`AgentAsJudgeEval`](https://docs.agno.com/evals/agent-as-judge) (LLM judge against a `criteria` rubric, binary pass/fail) and/or [`ReliabilityEval`](https://docs.agno.com/evals/reliability) (asserts which tools fired) — no custom DSL.
 
 ## 0. Preconditions
@@ -37,7 +39,7 @@ For every failed case, decide which kind of failure it is and fix at the appropr
 | Judge fails, response is fabricated | Agent hallucinated when it should have said it didn't know | Add a "if you can't find a real source, say so plainly" rule to the agent's instructions |
 | Reliability fails: "missing tool X" | Agent didn't call the expected tool on this prompt | (a) Strengthen the routing rule in instructions, OR (b) the case is too narrow — broaden `expected_tool_calls` or drop the assertion |
 | Reliability fails: "additional tool Y called" with `allow_additional_tool_calls=False` | Agent fanned out beyond the case's expectation | Tighten the agent's instructions OR set `allow_additional_tool_calls=True` |
-| Non-owner case unexpectedly reads data (or an owner case is capture-only) | Case `user_id` doesn't exercise the surface you think — the runner pins `OWNER_ID=eval-owner`, and only that id gets the owner toolset | Check the case's `user_id` against `EVAL_OWNER` in `evals/cases.py` |
+| Guest case unexpectedly reads data (or an owner case is capture-only) | Case `user_id` doesn't exercise the surface you think — the runner pins `OWNER_ID=eval-owner`, and only that id gets the owner toolset | Check the case's `user_id` against `EVAL_OWNER` in `evals/cases.py` |
 | Same case flips PASS/FAIL across consecutive runs with no code change | Judge variance — rubric is too loose | Re-run 2-3 times to confirm; if it keeps flipping, tighten the case's `criteria` (more specific, more falsifiable) |
 | Single case fails on full suite but passes alone | Transient flake or upstream rate limit (429s, MCP shutdown traceback) | Re-run the case in isolation. If it passes, re-run the full suite. If 429s persist, back off — don't fix the agent. |
 | Many cases fail at once | Broad regression — model swap, MCP server down, tool removed | Diagnose the root cause first; do NOT paper over with prompt edits |
@@ -114,7 +116,7 @@ class Case:
     input: str
 
     # Identity the run is made under. Defaults to the owner (full toolset);
-    # any other id exercises the capture-only non-owner surface.
+    # any other id exercises the capture-only guest surface.
     user_id: str = EVAL_OWNER
 
     # Judge (LLM rubric, binary pass/fail): set to enable.
@@ -127,4 +129,4 @@ class Case:
 
 The runner calls `agent.arun()` once per case and feeds the response into both checks, so cases that set both fields cost one agent run, not two.
 
-**Identity is part of the case.** The runner pins `OWNER_ID=eval-owner` before importing the agent, so `user_id` decides which surface a case exercises: the default (`EVAL_OWNER`) gets the full owner toolset; any other id gets the capture-only non-owner surface — that's how the suite asserts the security boundary itself.
+**Identity is part of the case.** The runner pins `OWNER_ID=eval-owner` before importing the agent, so `user_id` decides which surface a case exercises: the default (`EVAL_OWNER`) gets the full owner toolset; any other id gets the capture-only guest surface — that's how the suite asserts the security boundary itself.

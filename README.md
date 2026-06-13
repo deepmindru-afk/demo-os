@@ -111,11 +111,16 @@ There are also a few other agent files that are worth reviewing:
 
 ### The skills
 
-Skills are reusable workflows that @context can run in a somewhat deterministic manner. They are defined in the `skills/` folder and it's recommended to add your own skills as needed.
-- [`skills/week-plan.md`](skills/week-plan.md) — the week plan skill.
-- [`skills/daily-rundown.md`](skills/daily-rundown.md) — the daily rundown skill.
-- [`skills/prep-for.md`](skills/prep-for.md) — the prep for skill.
-- [`skills/process-today.md`](skills/process-today.md) — the process today skill.
+The repo has **two distinct kinds of skill** — don't confuse them:
+
+- **Runtime skills** ([`skills/`](skills/)) — playbooks the deployed @context agent runs **for its owner**, invoked in natural language ("plan my week") and owner-gated. These are the ones meant here; add your own as needed.
+- **Coding-agent workflows** ([`.agents/skills/`](.agents/skills/)) — `/slash-command` workflows your *coding agent* (Claude Code, Codex, …) runs while **developing this repo**. Covered under [Build with coding agents](#extending), not here.
+
+The runtime skills, each a `<name>/SKILL.md` folder:
+- [`skills/week-plan/SKILL.md`](skills/week-plan/SKILL.md) — the week plan skill.
+- [`skills/daily-rundown/SKILL.md`](skills/daily-rundown/SKILL.md) — the daily rundown skill.
+- [`skills/prep-for/SKILL.md`](skills/prep-for/SKILL.md) — the prep-for skill.
+- [`skills/process-today/SKILL.md`](skills/process-today/SKILL.md) — the process-today skill.
 
 ## Run in production
 
@@ -195,7 +200,7 @@ This is where the alter-ego gets hands. With Google credentials configured, `que
 - **The daily rundown.** `scheduler=True` is on. Schedule a morning digest of meetings (next 7d) and due/overdue reminders, posted to Slack. Scheduled runs carry the scheduler's verified identity and run with your owner surface — set up once, briefed every morning. See [Agno scheduler docs](https://docs.agno.com/agent-os/scheduler).
 - **More sources.** See [Add a source](#add-a-source). The wiki can move from local files to a Git backend (durable, audited) by setting `WIKI_REPO_URL` + `WIKI_GITHUB_TOKEN`.
 - **The MCP read path.** The next bet: expose `query_*` over MCP, so your *other* agents — Claude Code, Cursor, whatever you run — can read through your @context instead of starting cold. The asymmetry already covers it: their reads ride your verified identity.
-- **Build with coding agents.** The repo ships coding-agent skills (in [`.agents/skills/`](.agents/skills/), symlinked into `.claude/` for Claude Code) for the agent-development lifecycle — `/extend-agent`, `/improve-agent`, `/eval-and-improve`, `/review-and-improve`. Because the code, traces, and iteration tools all live in one place, a coding agent can read, change, and harden @context end to end.
+- **Build with coding agents.** The repo ships **coding-agent workflows** (in [`.agents/skills/`](.agents/skills/), symlinked into `.claude/` for Claude Code) for the agent-development lifecycle — `/extend-agent`, `/improve-agent`, `/eval-and-improve`, `/review-and-improve`. These are distinct from the runtime skills under [`skills/`](skills/): they run in *your* coding agent and edit @context's code, not in the deployed agent. Because the code, traces, and iteration tools all live in one place, a coding agent can read, change, and harden @context end to end.
 
 ### Lock in behavior with evals
 
