@@ -41,7 +41,7 @@ services:
       AGENTOS_URL: http://127.0.0.1:8000
       # Owner identity. Set OWNER_ID in .env to your email (the one you sign in
       # to os.agno.com with) — the AgentOS UI sends it as your verified identity.
-      OWNER_ID: ${OWNER_ID:-my@email.com}
+      OWNER_ID: ${OWNER_ID:-owner@example.com}
       OWNER_NAME: ${OWNER_NAME:-Me}
       DB_HOST: context-db
       DB_PORT: 5432

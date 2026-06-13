@@ -25,15 +25,21 @@ Finally, @context can run playbooks defined under `skills/`. Reusable workflows 
 
 ## Security
 
-@context is an alter ego with access to a lot of sensitive information, so the security boundaries need to be tight. @context's design permits anyone to write to it, but only you can read or act through it.
+@context is an alter ego with access to a lot of sensitive information, so the security boundaries need to be airtight.
+
+@context's design permits anyone to write to it, but only you can read or act through it.
 
 To everyone but you, it's a polite notetaker that only captures — though it does remember who it's talking to: each caller gets their own memory, kept entirely separate from yours.
 
-The tools available per user are defined in code based on verified identity. The agent serving a guest does not have read tools. When @context takes an action on your behalf - sending an email, changing your calendar - the act tool pauses for your approval. The road to taking an external action is double-gated: the act tools only exists for the owner, and every action needs your sign-off. Read [`docs/SECURITY.md`](docs/SECURITY.md) for more details.
+The tools available to each role are defined in code and are applied to the agent based on the caller's verified identity.
+
+For @context to take an external action on your behalf - sending an email, changing your calendar - the act tool is double-gated: 1) the act tools only exist for the owner, and 2) every action needs your sign-off.
+
+Read [`docs/SECURITY.md`](docs/SECURITY.md) for more details.
 
 Additionally, everything runs locally or in your cloud, inside your VPC, with your data in your database.
 
-Security and privacy by default.
+Security and privacy is built into the design.
 
 ## Get started
 
@@ -45,7 +51,9 @@ cd context
 
 # Configure credentials
 cp example.env .env
-# Open .env and set OPENAI_API_KEY, OWNER_ID and OWNER_NAME
+# Open .env: set OPENAI_API_KEY, and set OWNER_ID to the email you'll
+# sign in to os.agno.com with (that's how the UI resolves you as the owner).
+# OWNER_NAME is an optional display name you can set.
 
 # Run on Docker
 docker compose up -d --build
@@ -53,7 +61,7 @@ docker compose up -d --build
 
 Confirm it's live at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-Connect to the AgentOS UI:
+Connect to the AgentOS UI to interact with @context:
 1. Open [os.agno.com](https://os.agno.com), sign in with your email (should be the same as your OWNER_ID).
 2. Click **Add OS → Local**
 3. Enter `http://localhost:8000` and name it "Local Context"
@@ -65,11 +73,12 @@ Chat with it at [os.agno.com](https://os.agno.com)
 
 <!-- TODO: Add a screenshot of the AgentOS UI -->
 
-Or use the API directly:
+Or use the API directly. Pass the email you set as `OWNER_ID` as the `user_id` so the run gets the owner surface — the AgentOS UI does this for you, but a raw request has to send it (any other id is treated as a guest):
 
 ```sh
 curl -s -X POST http://localhost:8000/agents/context/runs \
   -F "message=Met Kyle from Agno, wants a partnership. Follow up next week" \
+  -F "user_id=owner@example.com" \
   -F "stream=false"
 ```
 
@@ -78,24 +87,31 @@ curl -s -X POST http://localhost:8000/agents/context/runs \
 ## Understanding the codebase
 
 @context has 3 main components:
-2. The app under `app/`
-1. The agents under `agents/`
+1. The app under `app/`
+2. The agents under `agents/`
 3. The skills under `skills/`
 
 Review them in order.
 
 ### The app
 
-@context is a FastAPI application running the AgentOS runtime. See [`app/main.py`](app/main.py) for the entrypoint.
+@context is a FastAPI application running the AgentOS runtime. See [`app/main.py`](app/main.py) for the main entrypoint and [`app/settings.py`](app/settings.py) for shared settings. Read through [`app/identity.py`](app/identity.py) to understand how identity is validated. It looks overwhelming but all we're trying to do is check if (user_id is in the OWNER_ID list).
 
-Four files hold the whole model — read them in this order:
+### The agents
 
-1. [`app/identity.py`](app/identity.py) — who counts as the owner (`is_owner`); the verdict everything else keys off.
-2. [`agents/context.py`](agents/context.py) — the agent. `context_tools()` turns that verdict into a toolset: the full surface for you, a single capture tool for everyone else.
-3. [`agents/sources.py`](agents/sources.py) — the context providers (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
+The main agent file is [`agents/context.py`](agents/context.py). `context_tools()` adds the tools to the agent based on the caller's role (owner vs guest).
+
+Same with `caller_information()`, which adds the instructions to the agent based on the caller's role.
+
+There are also a few other agent files that are worth reviewing:
+- [`agents/instructions.py`](agents/instructions.py) — the instructions for the agent.
+- [`agents/sources.py`](agents/sources.py) — the context providers (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
+
+
 4. [`agents/inbox.py`](agents/inbox.py) — the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
-
-[`docs/SECURITY.md`](docs/SECURITY.md) explains why that split lives in code, not in the prompt.
+5. [`agents/policy.py`](agents/policy.py) — the defense-in-depth hooks that enforce the owner/guest boundary.
+6. .
+7. [`agents/inbox.py`](agents/inbox.py) — the inbound queue: `submit_update` (anyone) → `rundown` / `acknowledge` (you only).
 
 ## Add a source
 
@@ -120,7 +136,7 @@ The one setting that makes the deploy *yours* is `OWNER_ID` — every identity t
 
 ```sh
 # .env.production
-OWNER_ID=you@example.com
+OWNER_ID=owner@example.com
 ```
 
 **Without `OWNER_ID`, @context is capture-only for everyone** (it fails closed — nobody is the owner). The first entry is canonical: the identity your inbound queue is keyed under.

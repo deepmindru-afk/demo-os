@@ -23,15 +23,14 @@ from db import get_postgres_db
 # Owner-gated like the provider tools: the access tools are added only in the
 # owner branch of `context_tools`, and the browse snippet only renders in the
 # owner branch of `caller_information`. So a guest's tool surface *and* system
-# prompt carry zero skill references — the boundary is enforced in code, not a
-# prompt rule (see `docs/SECURITY.md`).
+# prompt carry zero skill references.
 _SKILLS_DIR = Path(__file__).resolve().parents[1] / "skills"
 
 
 def _load_skills() -> Skills | None:
-    """Build the skills registry, degrading to ``None`` if it can't load.
+    """Build the skills registry, degrading to `None` if it can't load.
 
-    A malformed ``SKILL.md`` raises ``SkillValidationError`` at load; we don't
+    A malformed `SKILL.md` raises `SkillValidationError` at load; we don't
     want one bad skill to take the agent — and the whole app — down at import.
     """
     if not _SKILLS_DIR.exists():
@@ -49,7 +48,7 @@ _skills = _load_skills()
 def caller_information(run_context: RunContext | None = None) -> str:
     """Build the caller's instructions based on their identity.
 
-    Wired as a callable on ``Agent.dependencies`` so agno resolves it on every run.
+    Wired as a callable on `Agent.dependencies` so Agno resolves it on every run.
     """
     if is_owner(run_context):
         skills = _skills.get_system_prompt_snippet() if _skills is not None else ""
@@ -60,11 +59,10 @@ def caller_information(run_context: RunContext | None = None) -> str:
 def context_tools(run_context: RunContext | None = None) -> list:
     """Build Context's tool list based on the caller's identity.
 
-    Wired as a callable on ``Agent.tools`` and resolved per run by setting ``cache_callables=False``.
+    Wired as a callable on `Agent.tools` and resolved per run by setting `cache_callables=False`.
 
-    The owner branch grants the full toolset — provider tools, queue, skills.
-    The guest branch is the security boundary: a guest never receives
-    a read or act tool. Identity absent or unverifiable is also capture-only (fail closed).
+    The owner branch gets access to the full set of tools — provider tools, the inbound queue, and runtime skills.
+    The guest branch gets access to the capture-only tool — submit_update.
     """
     if is_owner(run_context):
         tools: list = []
@@ -91,27 +89,20 @@ context = Agent(
     db=get_postgres_db(),
     instructions=CONTEXT_INSTRUCTIONS,
     tools=context_tools,
-    # Default user_id when a caller (eval runner, unauthenticated script)
-    # invokes Context without identifying the user. A guest id, so it defaults
-    # to the capture-only surface. Production surfaces (UI, Slack) override this with a verified identity.
+    # Default user_id when a caller (eval runner, unauthenticated script) invokes Context without providing a user_id.
+    # Production surfaces (UI, Slack) override this with a verified identity.
     user_id=ANON_USER_ID,
-    # Resolve tools on every run based on caller's identity.
+    # Resolve tools on every run based on the caller's verified identity.
     cache_callables=False,
-    # Pre-hook refuses unidentified prod runs and collapses the owner's
-    # configured identities onto the canonical id; tool-hook refuses any
-    # non-capture tool from a guest caller.
+    # Pre-hook refuses unidentified prod runs and collapses the owner's configured identities onto the canonical id.
     pre_hooks=[normalize_identity],
+    # Tool-hook refuses any non-capture tool from a guest caller.
     tool_hooks=[enforce_capture_only],
-    # `{caller_information}` resolves per run: the owner instructions (providers, loop,
-    # routing, queue, skills) for the owner; the capture-only instructions for the guests.
-    # `{owner_name}` is the owner's display name (OWNER_NAME, falling back to the
-    # canonical id) — cosmetic, never used for identity checks.
+    # `{caller_information}` resolves per run.
+    # `{owner_name}` is the owner's display name, also resolved per run.
     dependencies={"caller_information": caller_information, "owner_name": owner_display_name()},
-    # Per-caller learning — the one capability every caller keeps, outside the
-    # identity-conditioned toolset (see docs/SECURITY.md L2). Agentic mode adds
-    # `update_user_memory` + `update_profile` to every run, each keyed in code
-    # to the caller's own verified user_id; recall injects only that caller's
-    # data. A guest's memories and profile never touch the owner's context.
+    # @context can learn about the caller. Agentic mode adds `update_user_memory` + `update_profile` tools to the agent.
+    # A guest's memories and profile never touch the owner's context.
     learning=LearningMachine(
         user_profile=UserProfileConfig(mode=LearningMode.AGENTIC),
         user_memory=UserMemoryConfig(mode=LearningMode.AGENTIC),

@@ -70,7 +70,7 @@ docker logs context-api --since 30s 2>&1 | grep -E "Running: \w+\(" | head -40
 
 Logs are container-global. If multiple probes ran in the window, filter by `user_id` instead: `docker logs context-api --since 60s 2>&1 | grep -B1 -A5 'probe-<n>'`.
 
-**Identity decides the surface on `context`.** The toolset is identity-conditioned (see [`docs/SECURITY.md`](../../../docs/SECURITY.md)): compose treats `owner@context.local` (and the `anon` default) as the owner; any other `user_id` gets the capture-only non-owner surface. So owner-path probes must send `user_id=owner@context.local` (correlate their logs by time window or sequential batches instead of unique ids), and made-up `user_id`s are reserved for probes that *should* exercise the non-owner boundary — at least one probe always should.
+**Identity decides the surface on `context`.** The toolset is identity-conditioned (see [`docs/SECURITY.md`](../../../docs/SECURITY.md)): compose treats `owner@example.com` (and the `anon` default) as the owner; any other `user_id` gets the capture-only non-owner surface. So owner-path probes must send `user_id=owner@example.com` (correlate their logs by time window or sequential batches instead of unique ids), and made-up `user_id`s are reserved for probes that *should* exercise the non-owner boundary — at least one probe always should. (An `OWNER_ID` set in `.env` replaces the compose default entirely — check `.env` first and probe with that id instead.)
 
 Save each response so you can compare before vs. after.
 

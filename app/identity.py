@@ -56,7 +56,7 @@ OWNER_NAME: str | None = getenv("OWNER_NAME", "").strip() or None
 
 
 def owner_display_name(default: str = "the owner") -> str:
-    """The owner's name for prompts — ``OWNER_NAME``, else the canonical id, else ``default``."""
+    """The owner's name for prompts — `OWNER_NAME`, else the canonical id, else `default`."""
     return OWNER_NAME or CANONICAL_OWNER_ID or default
 
 

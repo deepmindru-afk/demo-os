@@ -112,7 +112,7 @@ SLACK_SIGNING_SECRET="***"        # Basic Information → App Credentials
 
 # Make sure OWNER_ID includes your Slack email — that's how Slack-you
 # resolves to owner-you.
-OWNER_ID=you@example.com
+OWNER_ID=owner@example.com
 ```
 
 Restart:

@@ -2,19 +2,11 @@
 Context's Provider Registry
 ===========================
 
-Wiring for the context providers available to Context. The structured store
-(``crm``), the knowledge base (``knowledge``), the workspace, and web are
-always on; Slack, Gmail, and Calendar are added to the agent when their env
-vars are set.
+Wiring for the context providers available to Context. The structured store (`crm`), the knowledge base (`knowledge`), the workspace, and web are always on; Slack, Gmail, and Calendar are added to the agent when credentials are set.
 
-Each provider exposes at most two tools to the main agent — ``query_<id>``
-and ``update_<id>`` — so the tool surface stays linear at 2N as sources grow.
+Each provider exposes at most two tools to the main agent — `query_<id>` and `update_<id>` — so the tool surface stays linear at 2N as sources grow.
 
-``ACT_TOOLS`` names the tools that act on the outside world *as the owner*
-(sending email, changing the calendar). ``agents.context`` flags them
-``requires_confirmation`` so the run pauses for the owner's explicit approval
-before they execute — filing into your own store is frictionless; acting
-outward is gated (see ``docs/SECURITY.md``).
+`ACT_TOOLS` names the tools that act on the outside world *as the owner* (sending email, changing the calendar). `agents.context` flags them `requires_confirmation` so the run pauses for the owner's explicit approval before they execute — filing into your own store is frictionless; acting outward is gated (see `docs/SECURITY.md`).
 """
 
 import asyncio
@@ -38,14 +30,10 @@ from agents.instructions import CRM_READ, CRM_WRITE, KNOWLEDGE_READ, KNOWLEDGE_W
 from app.settings import default_model
 from db import SCHEMA, get_readonly_engine, get_sql_engine
 
-# Workspace root for the always-on filesystem context. Hardcoded to the
-# context repo so Context can answer questions about its own codebase out of
-# the box. Forks/private deployments can re-point this to their own repo.
+# Workspace root for the always-on filesystem context. Hardcoded to the context repo so @context can answer questions about its own codebase out of the box.
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-# Knowledge-base root — the prose Context files into. Filesystem-backed by
-# default; set WIKI_REPO_URL + WIKI_GITHUB_TOKEN to switch to GitBackend at
-# startup (durable storage with an audit trail).
+# Knowledge-base root — the prose @context files into. Filesystem-backed by default; set WIKI_REPO_URL + WIKI_GITHUB_TOKEN to switch to GitBackend at startup (durable storage with an audit trail).
 WIKI_KNOWLEDGE_PATH = REPO_ROOT / "wiki" / "knowledge"
 
 # Tools that act on the outside world as the owner. agents.context flags these
