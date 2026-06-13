@@ -13,8 +13,8 @@ from agno.utils.log import log_warning
 
 from agents.inbox import GUEST_TOOLS, acknowledge, rundown
 from agents.instructions import CONTEXT_INSTRUCTIONS, GUEST_GUIDE, OWNER_GUIDE
-from agents.reminders import fire_due_reminders
 from agents.policy import enforce_capture_only, normalize_identity
+from agents.reminders import fire_due_reminders
 from agents.sources import ACT_TOOLS, context_providers_summary, get_context_providers, list_contexts
 from app.identity import ANON_USER_ID, is_owner, owner_display_name
 from app.settings import default_model

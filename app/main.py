@@ -53,6 +53,7 @@ def register_schedules() -> None:
     except Exception as exc:
         log_warning(f"@context: could not register schedules: {exc}")
 
+
 # ---------------------------------------------------------------------------
 # Environment
 # ---------------------------------------------------------------------------

@@ -57,7 +57,9 @@ def _parse_owner_ids(raw: str) -> list[str]:
             continue
         ids.append(candidate)
     if dropped:
-        log_warning(f"OWNER_ID: ignoring reserved identity value(s) {dropped} — these are internal sentinels, not owners.")
+        log_warning(
+            f"OWNER_ID: ignoring reserved identity value(s) {dropped} — these are internal sentinels, not owners."
+        )
     return ids
 
 
