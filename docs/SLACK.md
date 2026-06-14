@@ -149,6 +149,12 @@ DM the bot — no @-mention needed in a DM:
 how are you?
 ```
 
+## Good to do: give it an app icon
+
+Not required but good to do: give your @context an icon.
+
+In your Slack app config, go to **Basic Information** → **Display Information** → **App icon & Preview** and click **Add App Icon**. Slack wants a square image at least 512×512 px (a PNG works well). The manifest already sets the background to `#000000`, so pick an icon that reads on dark.
+
 ## How it works
 
 The wiring lives in [`app/main.py`](../app/main.py):
