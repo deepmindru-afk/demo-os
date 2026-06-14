@@ -194,7 +194,7 @@ ungated like any chat reply. It stays **owner-only** the same way every write to
 does (L1) — a guest never holds it — but it does **not** pause for approval. The
 approval gate is reserved for the genuinely sensitive outward actions: sending
 mail as the owner, mutating the calendar. This ungated messaging is exactly what
-lets contexts talk to each other — see [`docs/FEDERATION.md`](FEDERATION.md). (A
+lets contexts talk to each other, the context network — see [`docs/NETWORK.md`](NETWORK.md). (A
 scheduled **digest** rides a separate, also-ungated path: it DMs the owner
 *themselves* via `agents/notify.py`, which is self-notification, not an outward
 act.)

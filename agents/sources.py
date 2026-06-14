@@ -214,7 +214,7 @@ def _create_slack_provider() -> SlackContextProvider | None:
     `write=True` (Agno's default, made explicit here) exposes `update_slack`, the
     owner's send tool: post to a channel, reply in a thread, DM a teammate, or
     @-mention another person's `@context` agent (which receives it through *their*
-    Slack interface and files it in their queue — federation over Slack). It's
+    Slack interface and files it in their queue — the context network). It's
     ungated on purpose — messaging is not in `ACT_TOOLS` — and owner-only by virtue
     of riding the provider surface (a guest never gets it). See `docs/SLACK.md`.
     """

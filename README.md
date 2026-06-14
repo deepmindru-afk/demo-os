@@ -23,7 +23,7 @@
    - **Prep** *("prep for my 2pm with Kyle")* - a tight pre-meeting brief: who they are, notes, past threads, what's still open, email and Slack exchanges, and - for not known contacts - public background pulled from the web.
 
    @context runs these playbooks on demand or on a schedule: the daily rundown and weekly plan will DM the brief straight to you.
-4. **Represent you.** Your teammates (and their agents) can share non-urgent updates with your @context. A teammate types *"@your-context my claude fixed the auth bug"* and it's saved to your queue - surfacing in your next rundown. It works outbound too: your @context can message people and channels on Slack on your behalf, and @-mention a teammate's @context to drop an update in *their* queue - which is how a team's contexts talk to each other ([federation](docs/FEDERATION.md)). This keeps your signal-to-noise high.
+4. **Represent you.** Your teammates (and their agents) can share non-urgent updates with your @context. A teammate types *"@your-context my claude fixed the auth bug"* and it's saved to your queue - surfacing in your next rundown. It works outbound too: your @context can message people and channels on Slack on your behalf, and @-mention a teammate's @context to drop an update in *their* queue - which is how a team's contexts talk to each other (the [context network](docs/NETWORK.md)). This keeps your signal-to-noise high.
 5. **Act, with your approval.** Connect [Gmail and Calendar](docs/GOOGLE.md) and it can send follow-ups and put meetings on your calendar. Tools that take external actions explicitly wait for your approval on the AgentOS UI before they execute.
 
 ## Security
