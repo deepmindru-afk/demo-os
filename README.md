@@ -90,27 +90,28 @@ Notes:
 
 ## @context Knowledge Base
 
-@context comes with a long-term knowledge base that acts as its second brain, and yours. @context stores everything from product specs, customer interviews, project briefs, research and decisions to "what I know about X" pages in this knowledge base.
+@context comes with a long-term knowledge base that acts as its second brain, and yours. @context stores everything from product specs and research notes to "what I know about X" pages in this knowledge base.
 
-The knowledge base is filesystem-backed by default (a gitignored `knowledge/` folder in this repo) but I highly recommend pointing it to a git repo or notion database for production. See [`docs/KNOWLEDGE.md`](docs/KNOWLEDGE.md) for the full guide.
+The knowledge base is configured as filesystem-backed by default (a gitignored `knowledge/` folder in this repo) but I highly recommend pointing it to a git repo or notion database for production. See [`docs/KNOWLEDGE.md`](docs/KNOWLEDGE.md) for the full guide.
 
 Try:
-- *"Research how we can build our own agent platform using agno"*
-- *"What are the advantages of owning our own agent platform?"*
+- *"Draft a spec to build our own agent-platform using agno"*
+- *"Summarize the agent-factories spec"*
+- *"What's our pgvector standard for new services?"*
+- *"Write up a decision: we're standardizing on pgvector 18"*
+- *"What in my knowledge base needs attention?"*
 
 ## @context CRM
 
-@context comes with a Postgres-backed **database** that gives it long-term **structured memory**. @context uses `query_crm` to read, `update_crm` to write to this database.
+@context comes with a postgres-backed **CRM** that gives it long-term **structured memory** about people, projects, meetings, reminders, notes and contacts.
 
-Use the database to manage projects, meetings, reminders, notes, and contacts. @context maps what you tell it onto the right table - no forms, no fields - and can create new tables on demand.
-
-@context's database lives in the `context` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest's capture can never read back across the boundary. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
-
-This lets @context handle requests like:
-- *"Add Dana Reyes, Head of Platform at Acme, dana@acme.com - and remind me to send her the integration spec next Tuesday."* - one sentence, two writes (a contact *and* a dated reminder), with "next Tuesday" resolved to a date.
+The auto-managing crm is @context's superpower. Use it to manage projects, meetings, reminders, notes, and contacts. @context maps what you tell it onto the right table - no forms, no fields - and can create new tables on demand. Try:
+- *"Add Dana Reyes, Head of Platform at Acme, dana@acme.com - and remind me to send her the integration spec next Tuesday."*
 - *"Who do I know at Acme?"*
-- *"What reminders do I have coming up?"* - time-aware: pending reminders by due date.
-- *"Tell me about Northwind."* - sweeps contacts, notes, projects, reminders, and meetings by tag, and folds in the knowledge base.
+- *"What reminders do I have coming up?"*
+- *"Tell me about Northwind."*
+
+@context's database lives in the `context` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest's can't see this data. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
 
 ## Run in production
 
