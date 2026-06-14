@@ -70,7 +70,7 @@ Connect the AgentOS UI to interact with @context:
 4. Connect.
 5. Click on the chat button under Context.
 
-<!-- TODO: add a screenshot of the AgentOS UI -->
+<img width="3066" height="2046" alt="Local Context AgentOS" src="https://github.com/user-attachments/assets/ee4b789a-1612-4b5d-9bd4-37e68ede91c4" />
 
 ## @context in Slack
 
