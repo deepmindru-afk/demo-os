@@ -158,18 +158,22 @@ In your Slack app config, go to **Basic Information** → **Display Information*
 You can use the prompt below to generate an icon for your own @context app.
 
 ```text
-Design a modern app icon for "@context" — a private AI that captures scattered work and files it into one calm, ordered place.
+A painterly, semi-realistic matte painting of an imagined city skyline at sunrise — warm, magical, and cinematic, in the style of a high-end animated-film background (Studio Ghibli / Disney concept art). Full-bleed square that fills the frame edge to edge — no border, no frame.
 
-Concept: one glowing core as the single focal point — a softly rounded cube or rounded-square "vault" where everything is kept. A few clean strokes or particles (3–5, no more) curve into it from the edges, hinting at notes, messages, and reminders being drawn into order. Hold one strong silhouette; resist adding more objects.
+Sky: a soft dawn of peach, rose, and pale lavender with gently painted clouds; the sun sits low on the horizon, washing warm golden light across the city.
 
-Palette: near-black background (#000000) with a warm amber-to-orange glow inside the core, and a single cool accent (soft electric blue) on the incoming strokes. Two colors plus the glow — no rainbow.
+City: a cluster of elegant towers — art-deco crowns and ornate spires in warm cream and tan stone, their windows catching the gold of sunrise; one or two rooftops capped in jewel teal-blue as accents. A calm river winds through the middle, holding a shimmering golden reflection of the sun.
 
-Style: premium and minimal, the polish of a top-tier macOS/iOS icon — depth from soft gradients and inner light, not from detail. Centered, with generous padding and a bold shape that still reads at 32×32.
+Foreground framing: a graceful tree branch with green leaves arcs across an upper corner; soft pink blossoms cascade down one side; lush green park trees and a few slender cypress line the bottom, tiny warm lamp-lights glowing among them. Gentle depth of field — crisp leaves up front, soft painterly city behind.
 
-Avoid: text, letters, the @ symbol, human faces, robot mascots, the Slack logo, watermarks, photorealism, and busy clutter.
+Palette: warm gold and amber light, peach-and-rose sky, soft blossom pink, cream stone, deep park green, a single teal-blue accent.
+
+Square 1:1, balanced composition, rich depth, reads beautifully when Slack masks it to a rounded square.
+
+Avoid: any real or recognizable city or landmark; text, letters, logos, watermarks; people in the foreground; harsh HDR; night; clutter.
 ```
 
-After generating the icon, upload it to Slack. The manifest already sets the app background to `#000000`, so icons with a dark background or strong center glow usually work best.
+After generating the icon, upload it to Slack (a square PNG, 512×512 or larger). Slack masks icons to a rounded square, so a full-bleed image — no border of its own — works best. Tweak the prompt to taste: swap sunrise for blue-hour dusk, the blossoms for autumn maples, or the river for a harbor.
 
 ## How it works
 
