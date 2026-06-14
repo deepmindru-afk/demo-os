@@ -81,39 +81,21 @@ curl -s -X POST http://localhost:8000/agents/context/runs \
 
 > Imagine building products on top of this API!
 
-## Understanding the codebase
+## @context in Slack
 
-@context has three main components. Review them in order.
+Slack is where @context comes alive. It's the interface where I (@ashpreetbedi) use it the most and the interface that allows your team (and their agents) to talk to @context.
 
-### The app (`app/`)
+To set it up, you need to:
+1. Create a Slack app
+2. Get the Bot User OAuth Token and Signing Secret
+3. Set the environment variables in `.env` or `.env.production`
+4. Restart the application
 
-@context is a FastAPI application running the AgentOS runtime. [`app/main.py`](app/main.py) is the entrypoint and [`app/settings.py`](app/settings.py) holds shared settings. [`app/identity.py`](app/identity.py) is where identity is validated. It looks dense, but all it does is check whether `user_id` is in the `OWNER_ID` list (comma-separated).
+Read [`docs/SLACK.md`](docs/SLACK.md) for the Slack setup guide.
 
-### The agents (`agents/`)
-
-The main agent is [`agents/context.py`](agents/context.py). `context_tools()` adds tools to the agent based on the caller's role, and `caller_information()` adds the matching instructions.
-
-The supporting files:
-
-- [`agents/instructions.py`](agents/instructions.py) defines the role-specific instructions.
-- [`agents/sources.py`](agents/sources.py) defines the context providers (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
-- [`agents/inbox.py`](agents/inbox.py) defines the inbound queue: `submit_update` (anyone), then `rundown` / `acknowledge` (you only).
-- [`agents/reminders.py`](agents/reminders.py) defines the reminder sweep: `fire_due_reminders` files due reminders into the inbound queue on a daily schedule.
-- [`agents/policy.py`](agents/policy.py) defines the pre-hook and tool-hook that back the owner/guest boundary.
-
-### The skills (`skills/`)
-
-The repo has **two distinct kinds of skill**. Keep them separate.
-
-- **Runtime skills** ([`skills/`](skills/)) are playbooks the deployed @context agent runs **for its owner**, invoked in natural language ("plan my week") and owner-gated. Add your own as needed.
-- **Coding-agent workflows** ([`.agents/skills/`](.agents/skills/)) are `/slash-command` workflows your *coding agent* (Claude Code, Codex, others) runs while **developing this repo**. They are covered under [Working with coding agents](AGENTS.md#working-with-coding-agents).
-
-Here are the runtime skills that are included in the repo:
-
-- [`skills/week-plan/SKILL.md`](skills/week-plan/SKILL.md).
-- [`skills/daily-rundown/SKILL.md`](skills/daily-rundown/SKILL.md).
-- [`skills/prep-for/SKILL.md`](skills/prep-for/SKILL.md).
-- [`skills/process-today/SKILL.md`](skills/process-today/SKILL.md).
+Notes:
+- Agno's AgentOS automatically sets up the Slack interface when the `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` env vars are set.
+- The `resolve_user_identity=True` flag tells the AgentOS to resolve the Slack user identity to an email, which is what `OWNER_ID` matches against to determine the caller's role (owner or guest).
 
 ## Run in production
 
@@ -193,22 +175,39 @@ Or enable auto-deploy in the Railway dashboard:
 4. Click **Source** and select the git repo for this project
 5. Set the deploy branch to `main` and click **Save (or Deploy)**
 
-## @context in Slack
+## Understanding the codebase
 
-Slack is where @context comes alive. It's the interface where I (@ashpreetbedi) use it the most and the interface that allows your team (and their agents) to talk to @context.
+@context has three main components. Review them in order.
 
-To set it up, you need to:
-1. Create a Slack app
-2. Get the Bot User OAuth Token and Signing Secret
-3. Set the environment variables in `.env` or `.env.production`
-4. Restart the application
+### The app (`app/`)
 
-Read [`docs/SLACK.md`](docs/SLACK.md) for the Slack setup guide.
+@context is a FastAPI application running the AgentOS runtime. [`app/main.py`](app/main.py) is the entrypoint and [`app/settings.py`](app/settings.py) holds shared settings. [`app/identity.py`](app/identity.py) is where identity is validated. It looks dense, but all it does is check whether `user_id` is in the `OWNER_ID` list (comma-separated).
 
-Notes:
-- Agno's AgentOS sets up the Slack interface when the `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` env vars are set.
-- The `resolve_user_identity=True` flag tells the AgentOS to resolve the Slack user identity to an email, which is what `OWNER_ID` matches against.
-- See [`app/main.py`](app/main.py) for the implementation.
+### The agents (`agents/`)
+
+The main agent is [`agents/context.py`](agents/context.py). `context_tools()` adds tools to the agent based on the caller's role, and `caller_information()` adds the matching instructions.
+
+The supporting files:
+
+- [`agents/instructions.py`](agents/instructions.py) defines the role-specific instructions.
+- [`agents/sources.py`](agents/sources.py) defines the context providers (crm, knowledge, workspace, web, Slack, Gmail, Calendar) and how each registers its `query_` / `update_` tools.
+- [`agents/inbox.py`](agents/inbox.py) defines the inbound queue: `submit_update` (anyone), then `rundown` / `acknowledge` (you only).
+- [`agents/reminders.py`](agents/reminders.py) defines the reminder sweep: `fire_due_reminders` files due reminders into the inbound queue on a daily schedule.
+- [`agents/policy.py`](agents/policy.py) defines the pre-hook and tool-hook that back the owner/guest boundary.
+
+### The skills (`skills/`)
+
+The repo has **two distinct kinds of skill**. Keep them separate.
+
+- **Runtime skills** ([`skills/`](skills/)) are playbooks the deployed @context agent runs **for its owner**, invoked in natural language ("plan my week") and owner-gated. Add your own as needed.
+- **Coding-agent workflows** ([`.agents/skills/`](.agents/skills/)) are `/slash-command` workflows your *coding agent* (Claude Code, Codex, others) runs while **developing this repo**. They are covered under [Working with coding agents](AGENTS.md#working-with-coding-agents).
+
+Here are the runtime skills that are included in the repo:
+
+- [`skills/week-plan/SKILL.md`](skills/week-plan/SKILL.md).
+- [`skills/daily-rundown/SKILL.md`](skills/daily-rundown/SKILL.md).
+- [`skills/prep-for/SKILL.md`](skills/prep-for/SKILL.md).
+- [`skills/process-today/SKILL.md`](skills/process-today/SKILL.md).
 
 ## Connect Gmail and Calendar
 
