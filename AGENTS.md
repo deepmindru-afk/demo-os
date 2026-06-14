@@ -137,7 +137,7 @@ Managed tables are declared once in [`db/schema.py`](db/schema.py) `TABLES`. One
 
 The `knowledge` provider ([`agents/sources.py`](agents/sources.py), a `WikiContextProvider`) is the prose store — `query_knowledge` / `update_knowledge`. Like the CRM, its sub-agents run on tuned instructions (`KNOWLEDGE_READ` / `KNOWLEDGE_WRITE` in [`agents/instructions.py`](agents/instructions.py)), and those instructions make a **folder of specs** the canonical shape: the root `README.md` is the index, and each spec is a *folder* (often nested, e.g. `agno/features/agent-factories/`) following the `_template/` layout — `README.md` with a status table, `design.md`, `implementation.md`, `decisions.md`, `how-to-review.md`, `prompts.md`, `future-work.md`. Reads resolve a question through the index to the right sub-file (status vs design vs decisions); writes land in the right sub-file (a decision becomes the next ADR in `decisions.md`), keep the status table current, and add new specs to the index. Loose prose pages (runbooks, notes) live alongside the specs.
 
-The intended setup is Git-backed: point `WIKI_REPO_URL` + `WIKI_GITHUB_TOKEN` at your specs repo and the knowledge base becomes a durable source of truth — every `update_knowledge` auto-commits and pushes, so the audit trail is the git history. Without them it falls back to a local folder (`wiki/knowledge/`, gitignored).
+The intended setup is Git-backed: point `KNOWLEDGE_REPO_URL` + `KNOWLEDGE_GITHUB_TOKEN` at your specs repo and the knowledge base becomes a durable source of truth — every `update_knowledge` auto-commits and pushes, so the audit trail is the git history. Without them it falls back to a local folder (`knowledge/`, gitignored).
 
 ### Adding another agent (less common)
 
@@ -176,10 +176,10 @@ The suite lives in [`evals/`](evals/). Each case sends one input to the `context
 | `GOOGLE_DELEGATED_USER` | no | — | The mailbox/calendar the service account acts as (domain-wide delegation). |
 | `GOOGLE_SERVICE_ACCOUNT_JSON_B64` | no | — | The key as base64 for platforms without secret-file mounts — the entrypoint materializes it and sets `GOOGLE_SERVICE_ACCOUNT_FILE`. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_PROJECT_ID` | no | — | OAuth client for the `gmail` + `calendar` providers (personal accounts; consent tokens minted locally — [`docs/GOOGLE.md`](docs/GOOGLE.md)). |
-| `WIKI_REPO_URL` | no | — | Set with `WIKI_GITHUB_TOKEN` to back the `knowledge` base with a Git repo (durable, audit trail) instead of the local filesystem. Point it at your specs repo — see "The knowledge base". |
-| `WIKI_GITHUB_TOKEN` | no | — | GitHub token for the knowledge base's `GitBackend`. Required alongside `WIKI_REPO_URL`. |
-| `WIKI_BRANCH` | no | `main` | Branch for the knowledge base's `GitBackend`. |
-| `WIKI_LOCAL_PATH` | no | — | Local checkout path for the knowledge base's `GitBackend`. |
+| `KNOWLEDGE_REPO_URL` | no | — | Set with `KNOWLEDGE_GITHUB_TOKEN` to back the `knowledge` base with a Git repo (durable, audit trail) instead of the local filesystem. Point it at your specs repo — see "The knowledge base". |
+| `KNOWLEDGE_GITHUB_TOKEN` | no | — | GitHub token for the knowledge base's `GitBackend`. Required alongside `KNOWLEDGE_REPO_URL`. |
+| `KNOWLEDGE_BRANCH` | no | `main` | Branch for the knowledge base's `GitBackend`. |
+| `KNOWLEDGE_LOCAL_PATH` | no | — | Local checkout path for the knowledge base's `GitBackend`. |
 | `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASS` / `DB_DATABASE` | no | matches compose | Postgres connection. |
 | `DB_DRIVER` | no | `postgresql+psycopg` | SQLAlchemy driver. |
 | `AGNO_DEBUG` | no | `False` | If `True`, Agno emits verbose debug logs. Compose sets this for dev. |

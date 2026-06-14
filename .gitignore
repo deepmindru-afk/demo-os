@@ -64,9 +64,9 @@ Thumbs.db
 # =========================
 tmp
 
-# The owner's knowledge wiki — personal context data, never committed.
+# The owner's knowledge base — personal context data, never committed.
 # (The filesystem-backed `knowledge` provider writes here; see example.env.)
-wiki/
+knowledge/
 
 # Google credentials — OAuth token caches + the service account key
 # (see docs/GOOGLE.md). Personal credentials, never committed.

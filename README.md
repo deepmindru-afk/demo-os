@@ -243,7 +243,7 @@ python -m evals --case <name>  # one case
 | `GOOGLE_SERVICE_ACCOUNT_FILE` / `GOOGLE_DELEGATED_USER` | no | none | Service-account path for the `gmail` + `calendar` sources (Workspace, headless). See [`docs/GOOGLE.md`](docs/GOOGLE.md). |
 | `GOOGLE_SERVICE_ACCOUNT_JSON_B64` | no | none | The service-account key, base64, for platforms without secret-file mounts. The entrypoint materializes it. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_PROJECT_ID` | no | none | OAuth client for the `gmail` + `calendar` sources (personal accounts, tokens minted locally). |
-| `WIKI_REPO_URL` / `WIKI_GITHUB_TOKEN` | no | none | Set both to back the `knowledge` wiki with a Git repo instead of local files. Optional knobs: `WIKI_BRANCH` (default `main`), `WIKI_LOCAL_PATH`. |
+| `KNOWLEDGE_REPO_URL` / `KNOWLEDGE_GITHUB_TOKEN` | no | none | Set both to back the `knowledge` base with a Git repo instead of local files. Optional knobs: `KNOWLEDGE_BRANCH` (default `main`), `KNOWLEDGE_LOCAL_PATH`. |
 | `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASS` / `DB_DATABASE` | no | matches compose | Postgres connection. |
 | `DB_DRIVER` | no | `postgresql+psycopg` | SQLAlchemy driver. |
 | `AGNO_DEBUG` | no | `False` | If `True`, Agno emits verbose debug logs. Compose sets this for dev. |

@@ -13,13 +13,13 @@ update; the owner gets briefings, moves items to acknowledged, and lets context
 act on their behalf. That **asymmetry is the security model**, and it's enforced
 **in code from a trusted identity** — never in the prompt (a prompt rule is
 exactly what prompt injection defeats). It only works because the owner runs the
-deploy: their database, their wiki, their keys.
+deploy: their database, their knowledge base, their keys.
 
 ## Threat model
 
 | We protect | Against | Mechanism |
 |---|---|---|
-| The owner's stored context (CRM, wiki, queue) | Any guest caller reading it | Identity-conditioned toolset — guests get no read tools |
+| The owner's stored context (CRM, knowledge base, queue) | Any guest caller reading it | Identity-conditioned toolset — guests get no read tools |
 | The ack axis (what's "handled") | Anyone but the owner marking items done/acknowledged | Only the owner's toolset has the ack tool |
 | Acting *as* the owner (sending mail, changing the calendar) | The model doing it unprompted; guests triggering it | Owner-only act tools + a per-call approval gate — the run pauses until the owner confirms (L6) |
 | Identity itself | A caller or the model forging "I am the owner" | Trusted identity from verified JWT / Slack HMAC, not the request body |
@@ -125,7 +125,7 @@ keyed to the **caller's** verified `user_id` — closed over in code when the
 tools are built per run, never a model argument — recall injects only that same
 caller's data on later runs, and the OS learning routes are scoped by
 `user_isolation` (L5). What a teammate tells @context is remembered *about
-them, for them* — never blended into the owner's CRM, wiki, or queue.
+them, for them* — never blended into the owner's CRM, knowledge base, or queue.
 
 ### L3 — The ack axis is owner-only, for free
 
@@ -147,8 +147,8 @@ of the toolset:
   else is silently swallowed); agno substitutes the agent-level `"anon"`
   default before hooks run, so that sentinel is what a bypassed-auth request
   looks like. Then any configured owner identity (Slack email, JWT `sub`) is
-  rewritten to the canonical `OWNER_ID`, so the structured store, wiki, and
-  queue key under one identity instead of fragmenting per channel.
+  rewritten to the canonical `OWNER_ID`, so the structured store, knowledge
+  base, and queue key under one identity instead of fragmenting per channel.
 - `enforce_capture_only` (**tool-hook**) gates *every* tool call: a guest may
   only invoke the capture-only allowlist — `submit_update` plus the per-caller
   learning tools (`update_user_memory` / `update_profile`, see L2). Anything
@@ -216,7 +216,7 @@ mid-schedule, so unattended automation can read and file but never send.
   `normalize_identity` can't rewrite it there: an owner with distinct Slack and
   JWT identities gets per-channel memories and sessions (sessions deliberately
   so — the OS routes' `user_isolation` filters by the JWT identity). The
-  structured store, wiki, and queue are unaffected (canonicalized). If
+  structured store, knowledge base, and queue are unaffected (canonicalized). If
   cross-channel memory continuity matters, keep the identities aligned (mint
   the JWT `sub` as your email).
 - `OWNER_ID` **fails closed**: unset means nobody is the owner and Context is

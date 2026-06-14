@@ -28,8 +28,8 @@ def normalize_identity(run_context: RunContext, **kwargs: Any) -> None:
         raise InputCheckError("No verified identity on this run; refusing in production.")
 
     # The owner's identities (Slack email, JWT sub) all collapse onto the
-    # canonical id, so the structured store, wiki, and queue key under one
-    # identity instead of fragmenting per channel.
+    # canonical id, so the structured store, knowledge base, and queue key
+    # under one identity instead of fragmenting per channel.
     if CANONICAL_OWNER_ID is not None and is_owner(run_context):
         run_context.user_id = CANONICAL_OWNER_ID
 

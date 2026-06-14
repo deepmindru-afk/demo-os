@@ -24,7 +24,7 @@ file.
    - `query_crm` — contacts, notes, projects, and any reminders/meetings tagged
      to the subject (name, company, tags, meeting attendees). This is our
      relationship + history.
-   - `query_knowledge` — wiki prose about the subject (runbooks, summaries,
+   - `query_knowledge` — knowledge-base prose about the subject (runbooks, summaries,
      "what I know about X").
    - `query_slack` (when connected) — recent threads mentioning the subject;
      the latest exchanges are often the freshest context in the brief.

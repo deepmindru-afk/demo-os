@@ -35,8 +35,8 @@ from db import SCHEMA, get_readonly_engine, get_sql_engine
 # Workspace root for the always-on filesystem context. Hardcoded to the context repo so @context can answer questions about its own codebase out of the box.
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-# Knowledge-base root - where @context stores files. Filesystem-backed by default; set WIKI_REPO_URL + WIKI_GITHUB_TOKEN to switch to GitBackend at startup for durable storage with an audit trail.
-WIKI_KNOWLEDGE_PATH = REPO_ROOT / "wiki" / "knowledge"
+# Knowledge-base root - where @context stores files. Filesystem-backed by default; set KNOWLEDGE_REPO_URL + KNOWLEDGE_GITHUB_TOKEN to switch to GitBackend at startup for durable storage with an audit trail.
+KNOWLEDGE_PATH = REPO_ROOT / "knowledge"
 
 # Tools that take action in the outside world as the owner. `agents.context` flags these `requires_confirmation` per run, so the model can never execute one without the owner's explicit approval.
 ACT_TOOLS: frozenset[str] = frozenset({"update_gmail", "update_calendar"})
@@ -59,7 +59,7 @@ def create_context_providers() -> list[ContextProvider]:
         _create_workspace_provider(),
         _create_agno_provider(),
         _create_crm_provider(),
-        _create_knowledge_wiki(),
+        _create_knowledge_provider(),
     ]
     for factory in (_create_slack_provider, _create_gmail_provider, _create_calendar_provider):
         try:
@@ -168,31 +168,31 @@ def _create_crm_provider() -> DatabaseContextProvider:
     )
 
 
-def _create_knowledge_wiki() -> WikiContextProvider:
+def _create_knowledge_provider() -> WikiContextProvider:
     """The knowledge base — read + write knowledge, organized folder-per-spec.
 
-    Filesystem-backed by default. Set `WIKI_REPO_URL` AND `WIKI_GITHUB_TOKEN` — ideally pointing at your specs repo — to switch to `GitBackend` for durable storage with an audit trail. Optional knobs: `WIKI_BRANCH` (default `main`), `WIKI_LOCAL_PATH`.
+    Filesystem-backed by default. Set `KNOWLEDGE_REPO_URL` AND `KNOWLEDGE_GITHUB_TOKEN` — ideally pointing at your specs repo — to switch to `GitBackend` for durable storage with an audit trail. Optional knobs: `KNOWLEDGE_BRANCH` (default `main`), `KNOWLEDGE_LOCAL_PATH`.
     """
-    repo_url = getenv("WIKI_REPO_URL", "").strip()
-    github_token = getenv("WIKI_GITHUB_TOKEN", "").strip()
+    repo_url = getenv("KNOWLEDGE_REPO_URL", "").strip()
+    github_token = getenv("KNOWLEDGE_GITHUB_TOKEN", "").strip()
 
     backend: FileSystemBackend | GitBackend
     if repo_url and github_token:
         backend = GitBackend(
             repo_url=repo_url,
             github_token=github_token,
-            branch=getenv("WIKI_BRANCH", "main"),
-            local_path=getenv("WIKI_LOCAL_PATH") or None,
+            branch=getenv("KNOWLEDGE_BRANCH", "main"),
+            local_path=getenv("KNOWLEDGE_LOCAL_PATH") or None,
         )
         log_info(f"Knowledge base: GitBackend ({repo_url})")
     else:
         if repo_url or github_token:
             log_warning(
-                "Knowledge base: WIKI_REPO_URL and WIKI_GITHUB_TOKEN must both be set "
+                "Knowledge base: KNOWLEDGE_REPO_URL and KNOWLEDGE_GITHUB_TOKEN must both be set "
                 "to enable GitBackend; falling back to FileSystemBackend."
             )
-        WIKI_KNOWLEDGE_PATH.mkdir(parents=True, exist_ok=True)
-        backend = FileSystemBackend(path=WIKI_KNOWLEDGE_PATH)
+        KNOWLEDGE_PATH.mkdir(parents=True, exist_ok=True)
+        backend = FileSystemBackend(path=KNOWLEDGE_PATH)
 
     return WikiContextProvider(
         id="knowledge",
