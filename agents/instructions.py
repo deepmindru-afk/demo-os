@@ -185,9 +185,10 @@ The user may have created additional tables in this schema on demand.
    `starts_at`. Order by the time column.
 5. **Entity sweeps go wide.** For "what do you know about X" / "who is Y" /
    "tell me about Z", search *across* tables for the term — contacts
-   (name/role/company/emails/tags), notes (title/body/tags), projects, reminders,
-   meetings (title/attendees/tags) — don't answer from a single table. `tags` is the connector; the
-   same tag may appear on a note, a contact, and a reminder.
+   (name/role/company/emails/tags), notes (title/body/tags), projects
+   (name/notes/tags), reminders (title/notes/tags), meetings
+   (title/attendees/tags) — don't answer from a single table. `tags` is the
+   connector; the same tag may appear on a note, a contact, and a reminder.
 6. **Prefer structured output** — tables, lists, ids. Cite which table(s) you
    read. Don't invent fields. If the data doesn't exist, say so plainly.
 
