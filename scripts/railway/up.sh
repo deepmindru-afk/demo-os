@@ -86,6 +86,26 @@ ${line}"
     done < "$1"
 }
 
+# Persist a resolved value back into the env file so it stays a faithful record
+# of the deploy (and env-sync.sh keeps managing it). Replaces an existing
+# commented-or-uncommented `KEY=` line in place; appends if the key is absent.
+# Rewrites via the original file (not `mv`) so a secrets file keeps its inode +
+# permissions. The `|` sed delimiter avoids clashing with URL slashes. No-op
+# when the file is missing.
+persist_env_var() {
+    local key="$1" value="$2" file="$3" tmp
+    [[ -z "$file" || ! -f "$file" ]] && return
+    if grep -qE "^[#[:space:]]*${key}=" "$file"; then
+        tmp="$(mktemp)"
+        if sed -E "s|^[#[:space:]]*${key}=.*|${key}=${value}|" "$file" > "$tmp"; then
+            cat "$tmp" > "$file"
+        fi
+        rm -f "$tmp"
+    else
+        printf '\n%s=%s\n' "$key" "$value" >> "$file"
+    fi
+}
+
 ENV_FILE=""
 [[ -f .env.production ]] && ENV_FILE=".env.production"
 [[ -z "$ENV_FILE" && -f .env ]] && ENV_FILE=".env"
@@ -180,10 +200,16 @@ APP_URL="$(grep -oE 'https://[A-Za-z0-9.-]+|[A-Za-z0-9-]+\.up\.railway\.app' <<<
 [[ -n "$APP_URL" && "$APP_URL" != https://* ]] && APP_URL="https://${APP_URL}"
 
 # The scheduler reaches AgentOS over its public URL — default it to the
-# fresh domain unless the env file pinned one (forwarded above).
+# fresh domain unless the env file pinned one (forwarded above). Write it back
+# into the env file too, so .env.production stays a faithful record of the
+# deploy and env-sync.sh keeps managing it (rather than the value living only
+# in Railway, while the file's commented localhost default invites a footgun).
+AGENTOS_URL_PERSISTED=""
 if [[ -z "$AGENTOS_URL" && -n "$APP_URL" ]]; then
     railway variables --set "AGENTOS_URL=${APP_URL}" --service agent-os > /dev/null
-    echo -e "${DIM}Set AGENTOS_URL=${APP_URL}${NC}"
+    persist_env_var AGENTOS_URL "$APP_URL" "$ENV_FILE"
+    [[ -n "$ENV_FILE" ]] && AGENTOS_URL_PERSISTED=1
+    echo -e "${DIM}Set AGENTOS_URL=${APP_URL} (Railway${AGENTOS_URL_PERSISTED:+ + ${ENV_FILE}})${NC}"
 fi
 
 # JWT auth is on in prd and the app refuses to serve without the key. Now
@@ -195,6 +221,7 @@ if [[ -z "$JWT_VERIFICATION_KEY" && -t 0 ]]; then
     echo -e "  1. Open ${BOLD}os.agno.com${NC} → Add OS → Live → enter ${APP_URL:-your Railway domain}"
     echo -e "  2. Enable ${BOLD}Token Based Authorization${NC} and copy the public key"
     echo -e "  3. Paste it into ${ENV_FILE:-.env.production} (full PEM block, no quotes)"
+    [[ -n "$AGENTOS_URL_PERSISTED" ]] && echo -e "  ${DIM}(AGENTOS_URL was already written to ${ENV_FILE} for you.)${NC}"
     echo ""
     read -r -p "  Press Enter when saved (or to deploy without it and env-sync later) " || true
     [[ -f .env.production ]] && ENV_FILE=".env.production"
