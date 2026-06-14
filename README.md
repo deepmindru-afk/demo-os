@@ -68,23 +68,9 @@ Connect the AgentOS UI to interact with @context:
 2. Click **Connect AgentOS → Local**.
 3. Enter `http://localhost:8000` and name it "Local Context".
 4. Connect.
-
-### Try it
-
-Chat with it at [os.agno.com](https://os.agno.com)
+5. Click on the chat button under Context.
 
 <!-- TODO: add a screenshot of the AgentOS UI -->
-
-Or call the API directly. Pass the email you set as `OWNER_ID` as the `user_id` so the run gets the owner surface. The AgentOS UI does this for you.
-
-```sh
-curl -s -X POST http://localhost:8000/agents/context/runs \
-  -F "message=Met Kyle from Agno, wants a partnership. Follow up next week" \
-  -F "user_id=owner@example.com" \
-  -F "stream=false"
-```
-
-> Imagine building products on top of this API!
 
 ## @context in Slack
 

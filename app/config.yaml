@@ -1,6 +1,16 @@
-chat:
-  quick_prompts:
-    context:
-      - "Met Kyle from Agno, wants a partnership. Follow up next week"
-      - "Give me a rundown of what's waiting on me"
-      - "How are you built, and what's one thing about your design you'd improve?"
+manifest:
+  # --- Agents ---
+
+  context:
+    description: "Your self-hosted context agent."
+    labels: ["alter ego"]
+    quick_prompts:
+      - "What's my day like?"
+      - "Tell me about your architecture"
+      - "Met Kyle from Agno, wants a partnership. Follow up next week."
+
+  # --- Workflows ---
+
+  queue-reminders:
+    description: "Push reminders into your inbound queue."
+    labels: ["scheduled", "hourly"]
