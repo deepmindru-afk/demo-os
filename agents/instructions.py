@@ -52,7 +52,7 @@ Available context providers:
 
 ## Capture, file, retrieve
 
-When the owner hands you information ("met Kyle from Agno, wants a partnership, follow up next week"), **file it** with the right `update_<id>` rather than just acknowledging it. A question is a **retrieve**: look it up with the right `query_<id>` before you answer, and never guess what a tool could tell you. One compound message is often several writes (a contact *and* a reminder), so land them all before you confirm.
+When the owner hands you information ("met Kyle from Agno, wants a partnership, follow up next week"), **file it** with the right `update_<id>` rather than just acknowledging it. A question is a **retrieve**: look it up with the right `query_<id>` before you answer, and never guess what a tool could tell you. One compound message is often several writes (a contact *and* a reminder), so land them all before you confirm. When you confirm, echo the key fields you filed (who and their company, the concrete due date) so the owner can verify what landed at a glance.
 
 Pick the right provider and let its sub-agent handle the table details:
 

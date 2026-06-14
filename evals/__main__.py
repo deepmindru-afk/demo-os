@@ -6,11 +6,17 @@ python -m evals                # run all cases (concise UI)
 python -m evals --case <name>  # run one case
 python -m evals -v             # stream the agent's run with full panels
 
-Each case runs the agent once, then optionally checks the response with
-`AgentAsJudgeEval` (when `criteria` is set) and `ReliabilityEval` (when
-`expected_tool_calls` is set).
+Each case runs the agent once (or, for the structural gate, runs a deterministic
+check with no model) and applies its checks:
 
-Both log to Postgres through `eval_db`. Connect your AgentOS at os.agno.com to see history.
+- **structural** — a deterministic toolset assertion. No agent run, no tokens.
+- **reliability** — `ReliabilityEval`, asserts the expected tools fired.
+- **capture-only** — for guest runs, asserts no read/act tool fired (trace level).
+- **judge** — `AgentAsJudgeEval`, an LLM rubric (binary pass/fail).
+
+The judge logs to Postgres through `eval_db`; connect your AgentOS at
+os.agno.com to see history. (The structural gate has no Agno eval primitive, so
+it shows in the CLI summary, not the platform.)
 
 Exit 0 on all-pass, non-zero on any failure or error.
 """
@@ -22,14 +28,15 @@ from evals.dotenv import load_dotenv
 load_dotenv()
 
 # Pin a deterministic owner identity for the eval run. Owner-path cases use
-# user_id="eval-owner" (full toolset); the capture-only case uses a different
-# id. Must be set before importing evals.cases (→ agents.context → app.identity
-# reads OWNER_ID at import time). Process-local — never touches the container.
+# user_id="eval-owner" (full toolset); guest cases use a different id. Must be
+# set before importing evals.cases (→ agents.context → app.identity reads
+# OWNER_ID at import time). Process-local — never touches the container.
 from os import environ  # noqa: E402
 
 environ["OWNER_ID"] = "eval-owner"
 
 import asyncio  # noqa: E402
+from contextlib import suppress  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 from uuid import uuid4  # noqa: E402
 
@@ -41,6 +48,8 @@ from rich.live import Live  # noqa: E402
 from rich.status import Status  # noqa: E402
 from rich.table import Table  # noqa: E402
 
+from agents.inbox import CAPTURE_ONLY_TOOLS  # noqa: E402
+from agents.sources import close_context_providers  # noqa: E402
 from evals.cases import CASES, Case, eval_db  # noqa: E402
 
 app = typer.Typer(add_completion=False, no_args_is_help=False, pretty_exceptions_show_locals=False)
@@ -50,23 +59,35 @@ console = Console()
 @dataclass
 class CaseOutcome:
     name: str
+    structural_passed: bool | None = None
     judge_passed: bool | None = None
     reliability_passed: bool | None = None
+    capture_passed: bool | None = None
     error: str | None = None
 
     @property
     def passed(self) -> bool:
         if self.error:
             return False
-        checks = [c for c in (self.judge_passed, self.reliability_passed) if c is not None]
+        checks = [
+            c
+            for c in (self.structural_passed, self.judge_passed, self.reliability_passed, self.capture_passed)
+            if c is not None
+        ]
         return bool(checks) and all(checks)
 
 
 async def _run_case_async(case: Case, *, verbose: bool) -> CaseOutcome:
+    # Deterministic structural gate — no agent run, no LLM, no tokens.
+    if case.structural is not None:
+        return _run_structural(case)
+
     judge_passed: bool | None = None
     rel_passed: bool | None = None
+    capture_passed: bool | None = None
     judge_err: str | None = None
     rel_err: str | None = None
+    capture_err: str | None = None
 
     # Dedicated session_id per case so eval traffic doesn't bleed into agent
     # history, and so verbose mode can fetch the run back via aget_last_run_output.
@@ -98,23 +119,17 @@ async def _run_case_async(case: Case, *, verbose: bool) -> CaseOutcome:
     if not verbose:
         _print_response_concise(response, output_str)
 
-    if case.criteria is not None:
-        try:
-            judge = await AgentAsJudgeEval(
-                name=case.name,
-                criteria=case.criteria,
-                scoring_strategy="binary",
-                db=eval_db,
-            ).arun(input=case.input, output=output_str, print_results=verbose)
-        except Exception as exc:
-            judge_err = f"judge: {type(exc).__name__}: {exc}"
-        else:
-            if judge and judge.results:
-                judge_passed = judge.results[0].passed
-                if not verbose:
-                    _print_judge_verdict(judge.results[0])
-            else:
-                judge_err = "judge: returned no result"
+    # Capture-only (deterministic): for a guest run, every tool that fired must
+    # be on the capture-only allowlist — proof at the trace level that the agent
+    # called no read/act tool, whatever it was asked to do.
+    if case.capture_only:
+        fired = [t.tool_name for t in (response.tools or []) if t.tool_name]
+        leaked = sorted({n for n in fired if n not in CAPTURE_ONLY_TOOLS})
+        capture_passed = not leaked
+        if leaked:
+            capture_err = f"capture-only: guest fired non-allowlisted tool(s): {leaked}"
+        if not verbose:
+            _print_capture_verdict(capture_passed, leaked)
 
     if case.expected_tool_calls is not None:
         try:
@@ -135,11 +150,49 @@ async def _run_case_async(case: Case, *, verbose: bool) -> CaseOutcome:
                 if not verbose:
                     _print_reliability_verdict(rel, case.expected_tool_calls)
 
+    if case.criteria is not None:
+        try:
+            judge = await AgentAsJudgeEval(
+                name=case.name,
+                criteria=case.criteria,
+                additional_guidelines=list(case.judge_guidelines) if case.judge_guidelines else None,
+                scoring_strategy="binary",
+                db=eval_db,
+            ).arun(input=case.input, output=output_str, print_results=verbose)
+        except Exception as exc:
+            judge_err = f"judge: {type(exc).__name__}: {exc}"
+        else:
+            if judge and judge.results:
+                judge_passed = judge.results[0].passed
+                if not verbose:
+                    _print_judge_verdict(judge.results[0])
+            else:
+                judge_err = "judge: returned no result"
+
     return CaseOutcome(
         name=case.name,
         judge_passed=judge_passed,
         reliability_passed=rel_passed,
-        error="; ".join(e for e in (judge_err, rel_err) if e) or None,
+        capture_passed=capture_passed,
+        error="; ".join(e for e in (capture_err, rel_err, judge_err) if e) or None,
+    )
+
+
+def _run_structural(case: Case) -> CaseOutcome:
+    """Run a deterministic structural gate (no agent, no LLM)."""
+    assert case.structural is not None
+    try:
+        passed, detail = case.structural()
+    except Exception as exc:
+        return CaseOutcome(name=case.name, error=f"structural: {type(exc).__name__}: {exc}")
+    style = "green" if passed else "red"
+    tag = "PASS" if passed else "FAIL"
+    console.print(f"\n[bold]Structural gate:[/bold] [{style}]{tag}[/{style}]")
+    console.print(f"[dim]  {detail}[/dim]")
+    return CaseOutcome(
+        name=case.name,
+        structural_passed=passed,
+        error=None if passed else f"structural: {detail}",
     )
 
 
@@ -207,16 +260,46 @@ def _print_reliability_verdict(rel_result: object, expected_tools: tuple[str, ..
     console.print(f"\n[bold]Reliability:[/bold] [{style}]{tag}[/{style}]  [dim]expected: {expected}[/dim]")
 
 
-def run_case(case: Case, *, verbose: bool) -> CaseOutcome:
-    return asyncio.run(_run_case_async(case, verbose=verbose))
-
-
-def _check_cell(passed: bool | None) -> str:
-    if passed is None:
-        return "[dim]—[/dim]"
+def _print_capture_verdict(passed: bool, leaked: list[str]) -> None:
     style = "green" if passed else "red"
     tag = "PASS" if passed else "FAIL"
-    return f"[{style}]{tag}[/{style}]"
+    detail = "no read/act tool fired" if passed else f"leaked: {', '.join(leaked)}"
+    console.print(f"\n[bold]Capture-only:[/bold] [{style}]{tag}[/{style}]  [dim]{detail}[/dim]")
+
+
+def _checks_cell(o: CaseOutcome) -> str:
+    """Compact per-case check summary for the recap table."""
+    parts: list[str] = []
+    for label, value in (
+        ("gate", o.structural_passed),
+        ("tools", o.reliability_passed),
+        ("capture", o.capture_passed),
+        ("judge", o.judge_passed),
+    ):
+        if value is None:
+            continue
+        style = "green" if value else "red"
+        mark = "✓" if value else "✗"
+        parts.append(f"[{style}]{label} {mark}[/{style}]")
+    return "  ".join(parts) if parts else "[dim]—[/dim]"
+
+
+async def _run_suite(cases: list[Case], *, verbose: bool) -> list[CaseOutcome]:
+    """Run every case in a single event loop, then release provider resources.
+
+    One loop (rather than asyncio.run per case) lets us close the providers'
+    async clients (MCP/httpx) inside the loop in a finally — without it their
+    teardown lands after the loop is gone and prints 'Event loop is closed'.
+    """
+    outcomes: list[CaseOutcome] = []
+    try:
+        for i, c in enumerate(cases, 1):
+            console.rule(f"[bold]{c.name}[/bold]  [dim]{c.agent.id} · {i}/{len(cases)}[/dim]")
+            outcomes.append(await _run_case_async(c, verbose=verbose))
+    finally:
+        with suppress(Exception):
+            await close_context_providers()
+    return outcomes
 
 
 @app.callback(invoke_without_command=True)
@@ -242,19 +325,15 @@ def main(
             console.print(f"  [dim]available:[/dim] {', '.join(c.name for c in CASES)}")
             raise typer.Exit(2)
 
-    outcomes: list[CaseOutcome] = []
-    for i, c in enumerate(cases, 1):
-        console.rule(f"[bold]{c.name}[/bold]  [dim]{c.agent.id} · {i}/{len(cases)}[/dim]")
-        outcomes.append(run_case(c, verbose=verbose))
+    outcomes = asyncio.run(_run_suite(cases, verbose=verbose))
 
     table = Table(title="Eval Summary", title_style="bold sky_blue1", show_header=True, header_style="bold")
     table.add_column("Case", overflow="fold")
-    table.add_column("Judge")
-    table.add_column("Reliability")
+    table.add_column("Checks", overflow="fold")
     table.add_column("Status")
     for o in outcomes:
         status = "[green]PASS[/green]" if o.passed else "[red]FAIL[/red]"
-        table.add_row(o.name, _check_cell(o.judge_passed), _check_cell(o.reliability_passed), status)
+        table.add_row(o.name, _checks_cell(o), status)
 
     console.print()
     console.print(table)

@@ -62,8 +62,8 @@ Shared:
 | [`db/schema.py`](db/schema.py) | Single source for the structured store — `TABLES` renders the DDL (`create_tables()`, run at startup) *and* the agent's table-awareness. |
 | [`db/session.py`](db/session.py) | Two engines (write-guarded + read-only) + `get_postgres_db()` for agno persistence. |
 | [`db/url.py`](db/url.py) | Builds the database URL from env. |
-| [`evals/cases.py`](evals/cases.py) | Eval cases against `context` (capture/file, retrieval grounded in real files, graceful unknown, the guest boundary). |
-| [`evals/__main__.py`](evals/__main__.py) | `python -m evals` runner — wraps Agno's `AgentAsJudgeEval` + `ReliabilityEval`. |
+| [`evals/cases.py`](evals/cases.py) | Eval cases against `context` — the owner/guest asymmetry proven by a deterministic structural gate (`boundary_is_structural`) plus an adversarial guest arc and owner-competence cases (judge / reliability / capture-only checks). |
+| [`evals/__main__.py`](evals/__main__.py) | `python -m evals` runner — runs each case (or the deterministic gate), wiring Agno's `AgentAsJudgeEval` + `ReliabilityEval` with a trace-level capture-only check; one event loop, judge/reliability results to `eval_db`. |
 | [`docs/SECURITY.md`](docs/SECURITY.md) | The owner/guest security & authorization design — including act tools and the approval gate. |
 | [`docs/SLACK.md`](docs/SLACK.md) | Slack setup — app manifest, identity resolution, both sides of the boundary. |
 | [`docs/GOOGLE.md`](docs/GOOGLE.md) | Gmail + Calendar setup — both auth paths, token minting, the act-tool approval flow. |
@@ -158,7 +158,7 @@ These workflows cover the agent-development lifecycle against the `context` agen
 
 ## Evals
 
-The suite lives in [`evals/`](evals/). Each case sends one input to the `context` agent and optionally checks the response with [`AgentAsJudgeEval`](https://docs.agno.com/evals/agent-as-judge) (LLM judge against a rubric) and/or [`ReliabilityEval`](https://docs.agno.com/evals/reliability) (tool-call assertion). The runner pins `OWNER_ID=eval-owner`, so a case's `user_id` decides whether it exercises the owner toolset or the capture-only guest surface. Run with `python -m evals`; results log to Postgres via `eval_db`.
+The suite lives in [`evals/`](evals/) and is built around the product's headline — *anyone can write, only you can read* — proving it two ways. A deterministic **structural gate** (`boundary_is_structural`) asserts, with no model in the loop, that a guest's resolved toolset is exactly `submit_update` while the owner's includes the read/act tools — "structural, not a prompt rule" made testable. The behavioural cases then run the agent as the owner (capture, grounded retrieval, graceful unknown) and as a guest (an adversarial arc: read the CRM, read the owner's schedule, a prompt-injection impersonation, and the one thing a guest *can* do — leave an update), each with up to three checks: [`ReliabilityEval`](https://docs.agno.com/evals/reliability) (which tools fired), a **capture-only** trace check (a guest run fired no read/act tool), and [`AgentAsJudgeEval`](https://docs.agno.com/evals/agent-as-judge) (an LLM rubric, kept decisive so it corroborates rather than flakes). The deterministic checks are the spine; the judge corroborates. The runner pins `OWNER_ID=eval-owner`, so a case's `user_id` decides whether it exercises the owner toolset or the capture-only guest surface, and runs the whole suite in one event loop (closing provider clients at the end). Run with `python -m evals`; the judge and reliability results log to Postgres via `eval_db` (visible at os.agno.com → Evaluation).
 
 ## Environment Variables
 

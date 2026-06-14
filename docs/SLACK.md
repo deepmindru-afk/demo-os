@@ -149,6 +149,19 @@ DM the bot — no @-mention needed in a DM:
 how are you?
 ```
 
+## Moving from local to production
+
+If you first set @context up against a local ngrok URL, your Slack app is still pointed at your local AgentOS — events stop reaching it the moment ngrok closes. To switch the app to your deployed instance, repoint the two request URLs at your AgentOS (Railway) domain:
+
+1. Make sure @context is already deployed and serving in production (see [README#run-in-production](../README.md#run-in-production)).
+2. Confirm `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, and your `OWNER_ID` (with your Slack email) are in `.env.production`, then run `./scripts/railway/env-sync.sh` so the deployed instance has them.
+3. Go to [api.slack.com/apps](https://api.slack.com/apps) → your app.
+4. **Event Subscriptions** → set **Request URL** to `https://<your-railway-domain>/slack/events` and wait for the green **Verified**.
+5. **Interactivity & Shortcuts** → set **Request URL** to `https://<your-railway-domain>/slack/interactions`.
+6. **Save Changes** on both pages.
+
+The bot token and signing secret don't change — only the URLs. A Slack app has one set of request URLs, so it points at either local or production at a time; to run both side by side, create a second Slack app for local and production with its own token and secret.
+
 ## Good to do: give it an app icon
 
 Not required, but recommended: give your @context an icon.

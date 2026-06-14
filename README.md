@@ -203,6 +203,14 @@ Or enable auto-deploy in the Railway dashboard:
 4. Click **Source** and select the git repo for this project
 5. Set the deploy branch to `main` and click **Save (or Deploy)**
 
+### 6. Point Slack at production
+
+If you set Slack up locally, your Slack app's request URLs still point at your ngrok tunnel — i.e. your laptop — so events never reach the deployed instance.
+
+Repoint the `/slack/events` and `/slack/interactions` request URLs to your Railway domain. AgentOS must already be deployed and serving (JWT key in place) so Slack's URL re-verification passes.
+
+See [`docs/SLACK.md`](docs/SLACK.md#moving-from-local-to-production) for full steps.
+
 ## Understanding the codebase
 
 @context has three main components. Review them in order.
@@ -245,7 +253,7 @@ Acting as you is double-gated: the act tools exist only in your toolset, and eve
 
 ## Evals
 
-The eval suite ([`evals/`](evals/)) is the regression net. Each case checks the response with an LLM judge and/or a tool-call assertion, covering the capture-to-file loop and the guest boundary.
+The eval suite ([`evals/`](evals/)) is the regression net, and it's built around the one claim that matters: *anyone can write, only you can read.* A deterministic gate proves — with no model in the loop — that a guest's resolved toolset is exactly `submit_update`; adversarial guest cases confirm it refuses to read or leak owner data (even under a prompt-injection that tells it to act as you), and owner cases confirm it actually captures, retrieves, and admits what it can't find. Tool-call and trace-level checks are the spine; an LLM judge corroborates.
 
 ```sh
 python -m evals                # run the suite
