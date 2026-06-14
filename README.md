@@ -97,6 +97,34 @@ Notes:
 - Agno's AgentOS automatically sets up the Slack interface when the `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` env vars are set.
 - The `resolve_user_identity=True` flag tells the AgentOS to resolve the Slack user identity to an email, which is what `OWNER_ID` matches against to determine the caller's role (owner or guest).
 
+## @context Knowledge Base
+
+@context comes with a filesystem-backed **document store** that gives it long-term **document memory**. @context uses `query_knowledge` to read, `update_knowledge` to write to this knowledge base.
+
+Use the knowledge base to manage design specs, runbooks, decisions, and "what I know about X" pages.
+
+@context's knowledge base is filesystem-backed by default (a gitignored `knowledge/` folder), but we highly recommend backing it with a Git repo. See [`docs/KNOWLEDGE.md`](docs/KNOWLEDGE.md) for more details and how to use Git as a backend.
+
+This lets @context handle requests like:
+- *"What do we know about the Acme partnership?"* — sweeps the knowledge base (and the CRM) and tells you honestly if it's still just a stub.
+- *"Summarize the agent-factories spec — the design and where it stands."* — resolves the index → the spec folder, citing the sub-files.
+- *"What's our pgvector standard for new services?"*
+- *"Write up a decision: we're standardizing on pgvector 18."* — files it as the next ADR in the right spec's `decisions.md`.
+
+## @context Database (CRM)
+
+The CRM is @context's **structured memory** — `query_crm` to read, `update_crm` to write. It's a Postgres store (the `context` schema) with day-one tables for the things that have shape: **projects, meetings, reminders, notes, contacts**. The agent maps what you tell it onto the right table, and can create new tables on demand. Always on, read and write.
+
+Writes are confined to the `context` schema (a SQLAlchemy write-guard on the write path, a read-only transaction on the read path), and every row is scoped to your `user_id` — so a guest's capture can never read back across the boundary.
+
+Plain language, again:
+- *"Add Dana Reyes, Head of Platform at Acme, dana@acme.com — and remind me to send her the integration spec next Tuesday."* — one sentence, two writes (a contact *and* a dated reminder), with "next Tuesday" resolved to a date.
+- *"Who do I know at Acme?"*
+- *"What reminders do I have coming up?"* — time-aware: pending reminders by due date.
+- *"Tell me about Northwind."* — sweeps contacts, notes, projects, reminders, and meetings by tag, and folds in the knowledge base.
+
+Read [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
+
 ## Run in production
 
 @context runs anywhere that runs a Docker container.

@@ -67,6 +67,8 @@ Shared:
 | [`docs/SECURITY.md`](docs/SECURITY.md) | The owner/guest security & authorization design — including act tools and the approval gate. |
 | [`docs/SLACK.md`](docs/SLACK.md) | Slack setup — app manifest, identity resolution, both sides of the boundary. |
 | [`docs/GOOGLE.md`](docs/GOOGLE.md) | Gmail + Calendar setup — both auth paths, token minting, the act-tool approval flow. |
+| [`docs/KNOWLEDGE.md`](docs/KNOWLEDGE.md) | The `knowledge` base — the folder-per-spec prose store, the read/write split, filesystem vs Git backing (`KNOWLEDGE_*`). |
+| [`docs/CRM.md`](docs/CRM.md) | The `crm` structured store — the `context` schema tables, filing rules, and the write-guard/read-only boundary. |
 | [`compose.yaml`](compose.yaml) | Docker Compose for local development. |
 | [`railway.json`](railway.json) | Railway deploy config (Docker + 2 replicas + 4Gi/2vCPU). |
 
