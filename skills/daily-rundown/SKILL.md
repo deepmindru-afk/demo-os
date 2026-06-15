@@ -20,8 +20,18 @@ needs the owner's eyes today, not a mirror of every inbox and channel.
 
 ## Procedure
 
+**Keep it cheap.** Each source is a sub-agent call; the brief should be a handful
+of them, not a sweep. **One tight retrieval per source, no exploratory follow-ups,
+and never retry a source.** The two local sources below are the backbone and always
+run; the external ones are best-effort and get skipped the moment they're slow or
+unavailable (see the skip rule) — a complete-but-fast brief beats a perfect one that
+hangs.
+
 1. **Anchor on now.** Use the current datetime in your context; "today" is now →
    end of the local day.
+
+**Backbone — always run these two (fast, local):**
+
 2. **Inbound queue — call `rundown`.** It surfaces updates others marked done
    that the owner hasn't acknowledged, and the owner's own reminders the hourly
    sweep filed in once they fell due. (It marks what it shows as briefed — that
@@ -31,17 +41,22 @@ needs the owner's eyes today, not a mirror of every inbox and channel.
    - **Meetings** whose `starts_at` is today.
    - **Reminders** that are `pending` and due today, plus anything **overdue**
      (`due_at < now`, still pending).
-4. **If the `calendar` source is connected, pull today's real calendar too** —
-   `query_calendar` for today's events — and merge with the CRM meetings
-   (dedupe by title + start time; the calendar wins on times).
-5. **If the `gmail` source is connected, call `query_gmail`** for the handful of
-   messages that actually need the owner — unread and important, or addressed to
-   them and awaiting a reply, from today. Ask the sub-agent for that selection;
-   don't pull the whole inbox.
-6. **If the `slack` source is connected, call `query_slack`** for threads/DMs that
-   mention the owner or look like they're waiting on a reply. Keep it to "needs
-   your eyes," not an unread dump.
+
+**Best-effort add-ons — one call each, only if the source is connected; skip on any trouble:**
+
+4. **Calendar** (`calendar` connected): `query_calendar` for today's events; merge
+   with the CRM meetings (dedupe by title + start time; the calendar wins on times).
+5. **Inbox** (`gmail` connected): `query_gmail` for the handful that actually need
+   the owner — unread and important, or addressed to them and awaiting a reply, from
+   today. Ask the sub-agent for that tight selection; never pull the whole inbox.
+6. **Slack** (`slack` connected): `query_slack` for threads/DMs that mention the
+   owner or look like they're waiting on a reply. "Needs your eyes," not an unread dump.
 7. Order each list by its time column, ascending.
+
+**Skip rule (add-ons only).** If an add-on source returns an error, a `skipped` /
+`unavailable` note, or is plainly slow, **drop its section, note it in one line at
+the end** (e.g. "_Slack skipped — slow_"), and move on. Do not retry it and never let
+one source hold up the brief. The backbone (queue + CRM) always stands on its own.
 
 **De-dup — one item, one line.** The queue and the other sources overlap; prefer
 the queue copy and don't repeat:

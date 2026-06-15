@@ -24,6 +24,7 @@ protection (`allowed_hosts`), and `user_id` injection — there is no custom
 middleware in this module. See `context_mcp_config()` below.
 """
 
+import asyncio
 from os import getenv
 from urllib.parse import urlparse
 
@@ -32,7 +33,7 @@ from agno.tools import tool
 
 from agents.context import context
 from app.identity import CANONICAL_OWNER_ID, OWNER_IDS
-from app.settings import is_prd
+from app.settings import ask_context_timeout, is_prd
 
 # The MCP endpoint path. AgentOS mounts the MCP server at this path.
 MCP_PATH = "/mcp"
@@ -99,9 +100,26 @@ async def ask_context(message: str, user_id: str | None = None, session_id: str 
     """
     if not _caller_is_owner(user_id):
         raise ValueError("The @context MCP server is owner-only.")
-    # Key under the canonical id — matches normalize_identity and keeps sessions
-    # / storage from fragmenting across the owner's identities.
-    result = await context.arun(input=message, user_id=CANONICAL_OWNER_ID, session_id=session_id)
+    # Key under the canonical id — matches normalize_identity and keeps sessions /
+    # storage from fragmenting across the owner's identities.
+    #
+    # Hard ceiling on the whole run: a cross-source sweep chains several gpt-5.5
+    # sub-agents, and with no bound a slow one leaves the MCP client hanging on an
+    # open stream (pings, no result) until the client itself times out. Bounding it
+    # here turns "infinite hang" into a clean, actionable reply. Other exceptions are
+    # left to propagate — FastMCP serializes them into a proper `isError` result, so
+    # the client still gets a terminated stream, never a dead one.
+    try:
+        result = await asyncio.wait_for(
+            context.arun(input=message, user_id=CANONICAL_OWNER_ID, session_id=session_id),
+            timeout=ask_context_timeout(),
+        )
+    except (asyncio.TimeoutError, TimeoutError):
+        return (
+            "That took too long, so I stopped before finishing. Try narrowing it — ask about "
+            'one thing at a time (e.g. "what\'s due today" or "any urgent email") rather than a '
+            "full cross-source sweep."
+        )
     answer = result.content or ""
     if getattr(result, "is_paused", False):
         # A gated act tool (calendar) is waiting on the owner. There's no approval

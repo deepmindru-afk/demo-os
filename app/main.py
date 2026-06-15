@@ -3,6 +3,8 @@ AgentOS Entrypoint
 ==================
 """
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from os import getenv
 from pathlib import Path
@@ -77,9 +79,28 @@ if SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET:
 # Startup: create database tables and initialize context providers.
 # Shutdown: release provider resources.
 # ---------------------------------------------------------------------------
+def _enlarge_default_executor() -> None:
+    """Size asyncio's default thread pool for I/O-bound provider fan-out.
+
+    Agno runs every sync tool call (Postgres, Slack, Google) on the loop's default
+    thread pool. Its default is ~6 workers on a 2-vCPU box — too few for a rundown's
+    fan-out, so the fast sources queue behind the slow ones. Tunable via
+    ``THREAD_POOL_WORKERS``.
+    """
+    try:
+        workers = int(getenv("THREAD_POOL_WORKERS", "") or 0) or 64
+    except ValueError:
+        workers = 64
+    asyncio.get_running_loop().set_default_executor(
+        ThreadPoolExecutor(max_workers=workers, thread_name_prefix="ctx-io")
+    )
+    log_info(f"Default thread pool sized to {workers} workers (I/O-bound provider calls)")
+
+
 @asynccontextmanager
 async def lifespan(app):  # type: ignore[no-untyped-def]
     log_info("@context: startup")
+    _enlarge_default_executor()
     create_tables()
     register_schedules()
     await setup_context_providers()

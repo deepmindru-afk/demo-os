@@ -12,6 +12,8 @@ Slack messaging (`update_slack`) is deliberately **not** in `ACT_TOOLS`: posting
 """
 
 import asyncio
+import contextlib
+import inspect
 import json
 from os import getenv
 from pathlib import Path
@@ -30,7 +32,7 @@ from agno.tools.workspace import DEFAULT_EXCLUDE_PATTERNS
 from agno.utils.log import log_info, log_warning
 
 from agents.instructions import CRM_READ, CRM_WRITE, KNOWLEDGE_READ, KNOWLEDGE_WRITE
-from app.settings import default_model
+from app.settings import default_model, provider_query_timeout
 from db import SCHEMA, get_readonly_engine, get_sql_engine
 
 # Workspace root for the always-on filesystem context. Hardcoded to the context repo so @context can answer questions about its own codebase out of the box.
@@ -187,7 +189,13 @@ def _create_knowledge_provider() -> WikiContextProvider:
 
 
 def _create_slack_provider() -> SlackContextProvider | None:
-    """Slack — read + write. `query_slack` reads channels/DMs; `update_slack` posts."""
+    """Slack — read + write. `query_slack` reads channels/DMs; `update_slack` posts.
+
+    Note: `search.messages` needs a *user* token (`xoxp-`, scope `search:read`); a bot
+    token returns `not_allowed_token_type`. Agno hard-codes `enable_search_messages=True`
+    with no user-token slot, so search errors out and the read falls back to
+    channel/thread history. Pass a user token here to restore it.
+    """
     if not getenv("SLACK_BOT_TOKEN"):
         return None
     return SlackContextProvider(model=default_model(), read=True, write=True)
@@ -270,6 +278,176 @@ def _create_calendar_provider() -> ContextProvider | None:
         write=True,
         token_path=calendar_token_path(),
     )
+
+
+# ---------------------------------------------------------------------------
+# Owner tool hardening
+# ---------------------------------------------------------------------------
+#
+# A rundown fans `ask_context` out to several provider sub-agents back to back, and
+# agno puts no timeout around each one. We time-box every read here so a slow source
+# degrades to a one-line "skipped" and the rest of the brief still lands.
+#
+# Google reads get an extra guard: on a dead OAuth token we skip before spinning the
+# sub-agent, which also avoids agno's interactive browser-auth fallback (wrong on a
+# headless server). The token check uses only the public google.oauth2 API.
+
+
+def _timeout_error(label: str, timeout: float) -> str:
+    return json.dumps({"error": f"{label} timed out after {int(timeout)}s — skipped"})
+
+
+async def _drain_into(queue: asyncio.Queue, sentinel: object, make_call) -> None:
+    """Producer task: run a provider tool and push each chunk onto ``queue``.
+
+    A provider ``query_*`` entrypoint returns a coroutine; awaiting it yields either an
+    async generator of streamed events or a finished value. Running this in its own
+    task means a timeout cancels only the task — never the consumer or the calling
+    agent's tool flow — so a slow source can't corrupt the outer stream.
+    """
+    try:
+        res = make_call()
+        if inspect.iscoroutine(res):
+            res = await res
+        if inspect.isasyncgen(res):
+            async for chunk in res:
+                await queue.put(chunk)
+        else:
+            await queue.put(res)
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        await queue.put(json.dumps({"error": f"{type(exc).__name__}: {exc}"}))
+    finally:
+        await queue.put(sentinel)
+
+
+async def _bounded_tool_call(make_call, timeout: float, label: str):
+    """Yield a provider tool's chunks under a total wall-clock ``timeout``.
+
+    The tool runs as an isolated producer task feeding a queue. On timeout we emit one
+    error chunk (the providers' own ``{"error": ...}`` shape) and cancel the producer.
+    The remaining budget also caps inter-chunk stalls, not just the total.
+    """
+    queue: asyncio.Queue = asyncio.Queue()
+    sentinel = object()
+    task = asyncio.create_task(_drain_into(queue, sentinel, make_call))
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    try:
+        while True:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                yield _timeout_error(label, timeout)
+                return
+            try:
+                item = await asyncio.wait_for(queue.get(), timeout=remaining)
+            except (asyncio.TimeoutError, TimeoutError):
+                yield _timeout_error(label, timeout)
+                return
+            if item is sentinel:
+                return
+            yield item
+    finally:
+        if not task.done():
+            task.cancel()
+        with contextlib.suppress(BaseException):
+            await task
+
+
+def _timeout_query_tool(original, timeout: float):
+    """Wrap a provider ``query_*`` tool so its sub-agent run is time-boxed.
+
+    Same name + description; the explicit ``question`` / ``run_context`` signature keeps
+    agno's schema inference and run_context injection unchanged.
+    """
+    raw = original.entrypoint
+    label = original.name
+
+    @tool(name=original.name, description=original.description)
+    async def _query(question: str, run_context: RunContext | None = None):
+        async for chunk in _bounded_tool_call(lambda: raw(question=question, run_context=run_context), timeout, label):
+            yield chunk
+
+    return _query
+
+
+def _google_token_usable(token_path: str) -> bool:
+    """True iff a Google OAuth token is valid or can be refreshed without a browser.
+
+    Refreshes and persists an expired-but-refreshable token in place, so the provider's
+    sub-agent then loads a valid one. Never triggers interactive auth — a dead token
+    just returns False.
+    """
+    p = Path(token_path)
+    if not p.exists():
+        return False
+    try:
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+
+        creds = Credentials.from_authorized_user_file(str(p))
+    except Exception:
+        return False
+    if creds.valid:
+        return True
+    if creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except Exception:
+            return False
+        try:
+            p.write_text(creds.to_json())
+        except Exception:
+            pass
+        return bool(creds.valid)
+    return False
+
+
+def _guarded_google_query_tool(original, provider_id: str, timeout: float):
+    """Time-boxed ``query_gmail`` / ``query_calendar`` that skips on a dead token.
+
+    The token check runs off the loop and is itself bounded, so a hung refresh can't
+    stall the run either.
+    """
+    raw = original.entrypoint
+    label = original.name
+    token_path = gmail_token_path() if provider_id == "gmail" else calendar_token_path()
+
+    @tool(name=original.name, description=original.description)
+    async def _query(question: str, run_context: RunContext | None = None):
+        try:
+            usable = await asyncio.wait_for(asyncio.to_thread(_google_token_usable, token_path), timeout=8)
+        except Exception:
+            usable = False
+        if not usable:
+            yield json.dumps({"error": f"{provider_id} is unavailable right now (auth needs refresh) — skipped"})
+            return
+        async for chunk in _bounded_tool_call(lambda: raw(question=question, run_context=run_context), timeout, label):
+            yield chunk
+
+    return _query
+
+
+def owner_provider_tools() -> list:
+    """Owner provider tools, hardened against slow/dead sources.
+
+    Every read (``query_*``) is time-boxed, and Google reads also skip on a dead token.
+    Writes (``update_*``) pass through untouched — single user actions, not part of the
+    fan-out, and bounding one risks a half-finished write.
+    """
+    timeout = provider_query_timeout()
+    tools: list = []
+    for ctx in get_context_providers():
+        for t in ctx.get_tools():
+            name = getattr(t, "name", "") or ""
+            if not name.startswith("query_"):
+                tools.append(t)
+            elif ctx.id in ("gmail", "calendar"):
+                tools.append(_guarded_google_query_tool(t, ctx.id, timeout))
+            else:
+                tools.append(_timeout_query_tool(t, timeout))
+    return tools
 
 
 # ---------------------------------------------------------------------------

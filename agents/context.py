@@ -14,7 +14,7 @@ from agno.utils.log import log_warning
 from agents.inbox import GUEST_TOOLS, acknowledge, rundown
 from agents.instructions import CONTEXT_INSTRUCTIONS, GUEST_GUIDE, OWNER_GUIDE
 from agents.policy import enforce_capture_only, normalize_identity
-from agents.sources import ACT_TOOLS, context_providers_summary, get_context_providers, list_contexts
+from agents.sources import ACT_TOOLS, context_providers_summary, list_contexts, owner_provider_tools
 from app.identity import ANON_USER_ID, is_owner, owner_display_name
 from app.settings import default_model
 from db import get_postgres_db
@@ -104,9 +104,9 @@ def context_tools(run_context: RunContext | None = None) -> list:
     The guest branch gets access to the capture-only tool — submit_update.
     """
     if is_owner(run_context):
-        tools: list = []
-        for ctx in get_context_providers():
-            tools.extend(ctx.get_tools())
+        # Time-boxed provider reads so one slow source can't stall the run; Google
+        # reads also skip on a dead token. See `owner_provider_tools`.
+        tools: list = list(owner_provider_tools())
         tools += [list_contexts, rundown, acknowledge, queue_reminders]
         if _skills is not None:
             tools += _skills.get_tools()
@@ -155,6 +155,11 @@ context = Agent(
     add_datetime_to_context=True,
     add_history_to_context=True,
     read_chat_history=True,
-    num_history_runs=5,
+    # The MCP path reuses a session_id, so each call replays this many prior runs;
+    # 3 keeps continuity without a deep replay every request.
+    num_history_runs=3,
+    # Cap provider fan-out per question. Soft limit — agno lets the model answer from
+    # what it has instead of looping. Backs up the hard MCP timeout (app/mcp.py).
+    tool_call_limit=12,
     markdown=True,
 )
