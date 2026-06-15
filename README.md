@@ -94,7 +94,7 @@ Notes:
 
 @context ships a one-tool MCP server — `use_context` — so you can use it from any MCP client. Ask it anything, tell it anything to remember, or have it act — it figures out the rest.
 
-Desktop apps (Claude, ChatGPT) and CLI clients (Claude Code, Codex) reach it on localhost with zero setup — point them at `http://localhost:8000/mcp`. The client picks up both tools and uses them on its own; you don't have to call @context by name.
+Desktop apps (Claude, ChatGPT) and CLI clients (Claude Code, Codex) reach it on localhost with zero setup — point them at `http://localhost:8000/mcp`. The client picks it up and uses it on its own; you don't have to call @context by name.
 
 Cloud clients can't reach localhost — use an ngrok tunnel or a deployed instance: `https://<domain>/mcp` with `Authorization: Bearer <JWT>`. Same two paths as Slack.
 
