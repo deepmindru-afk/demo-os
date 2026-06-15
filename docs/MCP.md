@@ -31,6 +31,20 @@ curl -sS --max-time 10 -o /dev/null -w '%{http_code}\n' \
 
 Local dev runs without JWT, so any client on this machine that reaches `http://localhost:8000/mcp` is treated as **you, the owner** — the keyless-local-as-owner shortcut the rest of dev uses ([`app/mcp.py`](../app/mcp.py), `_resolve_caller_id`). That's the point locally, and the reason you don't expose a dev instance: anything on your machine that can reach the port gets your surface.
 
+## Quick connect (one command)
+
+From the repo root, with the stack up:
+
+```sh
+python scripts/connect.py            # add @context to every MCP client found
+python scripts/connect.py --dry-run  # preview, write nothing
+python scripts/connect.py --remove   # undo
+```
+
+It detects Claude Code, Codex, and the Claude Desktop app and wires @context into each — running `claude mcp add` / `codex mcp add` for the CLIs and writing an `mcp-remote` bridge into `claude_desktop_config.json` for the desktop app (absolute `npx` path resolved, existing keys preserved, a timestamped backup made, anything already configured skipped). Pure stdlib, so no venv needed. Useful flags: `--clients claude-code codex claude-desktop` to limit the set, `--url` for a non-default endpoint, `--config-path` to point at a non-standard desktop config.
+
+The per-client sections below are what it automates — reach for them to do it by hand, or for a deployed / HTTPS instance (which still needs the auth header set manually).
+
 ## Claude Code (CLI)
 
 ```sh
@@ -62,11 +76,11 @@ export CONTEXT_JWT=<JWT>
 codex mcp add --url https://<your-domain>/mcp --bearer-token-env-var CONTEXT_JWT context
 ```
 
-## Claude / ChatGPT desktop apps
+## Claude Desktop
 
-The desktop apps run on your machine, so they *can* reach `http://localhost:8000/mcp` — but how you add it depends on the build.
+Claude Desktop runs on your machine, so it *can* reach `http://localhost:8000/mcp` — just not through its connector UI (that's the wrong door; see below). Use the config file instead. `scripts/connect.py` writes this for you; to do it by hand:
 
-**Config-file + stdio bridge (works everywhere).** The desktop apps' config-file MCP support is stdio-only, so bridge the HTTP endpoint with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). For Claude Desktop, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+**Config-file + stdio bridge.** Claude Desktop's config-file MCP support is stdio-only, so bridge the HTTP endpoint with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -81,11 +95,15 @@ The desktop apps run on your machine, so they *can* reach `http://localhost:8000
 
 Restart the app and `use_context` shows up under the app's tools. (Verified: `mcp-remote` connects to the local server over StreamableHTTP and proxies it to the app over stdio.) For a deployed instance, swap the URL for `https://<your-domain>/mcp` and pass the token with `--header "Authorization: Bearer <JWT>"` in the `args`.
 
-> **`PATH` gotcha.** GUI apps on macOS don't inherit your shell `PATH`, so the app may fail to launch a bare `npx`. If the server doesn't connect, set `"command"` to the absolute path — find it with `which npx` (e.g. `/opt/homebrew/bin/npx` for a Homebrew Node).
+> **`PATH` gotcha.** GUI apps on macOS don't inherit your shell `PATH`, so the app may fail to launch a bare `npx`. If the server doesn't connect, set `"command"` to the absolute path — find it with `which npx` (e.g. `/opt/homebrew/bin/npx` for a Homebrew Node). On Windows, Claude Desktop can't exec `npx.cmd` directly — use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "mcp-remote", …]`. `scripts/connect.py` writes the right form for your OS automatically (the Windows path is best-effort — untested by us, since we develop on macOS).
 
 **Why not the "Add custom connector" UI?** Recent Claude Desktop builds also offer **Settings → Connectors → Add custom connector (BETA)**. It's the wrong door for @context for two confirmed reasons: it **rejects `http://` URLs** ("URL must start with 'https'"), and its only auth option is **OAuth** (Client ID / Secret) — there's no field for the static `Authorization: Bearer <JWT>` our server uses, so even a deployed HTTPS instance won't authenticate through it. The config-file bridge above is the path that works: it takes the plain localhost URL and can carry a static bearer header.
 
-## ChatGPT / cloud clients (deploy or tunnel)
+## ChatGPT desktop
+
+ChatGPT desktop has **no local MCP config** — there's no `claude_desktop_config.json` equivalent to write a stdio bridge into (verified on macOS by inspecting the app's support dir: only connectors/"Work with Apps" pairings, no `mcpServers`). It reaches MCP servers only as a **remote HTTPS connector**, so the one way to use @context from ChatGPT is a deployed or tunnelled HTTPS instance — the next section.
+
+## ChatGPT web / Claude web / cloud (deploy or tunnel)
 
 Cloud clients — ChatGPT on the web, Claude on the web — run on a remote server and **cannot reach your laptop**. They need a public HTTPS URL. Two ways, the same two we use for Slack.
 

@@ -1,13 +1,15 @@
-# @context - a professional alter ego
+# @context - professional context manager
 
-@context is a self-hosted alter ego: it manages your work context and organizes it using a private crm and knowledge base. @context is designed with privacy and security as the guiding principle. You own everything - your keys, your cloud, your data.
+@context is a self-hosted context manager. It organizes your work context into a private CRM and knowledge base. It plugs into clients like claude, chatGPT, claude code, and codex, and gives them a single source of @context about your work. Connect @context to slack and gmail, and you get a powerful chief of staff with context about everything.
 
-@context runs in two modes:
+> Your AI tools are users of context, not competitors.
+
+@context is designed with privacy and security as a first principle. It runs in two modes:
 
 1. **Owner mode:** all tools available: capture context (*"met Kyle from Agno, follow up next week"*), retrieve context (*"give me a rundown of my day"*), prepare context (*"process today"*)
 2. **Guest mode:** teammates (*and their agents*) can leave updates in your queue. You get briefed when you ask for a rundown.
 
-@context runs on Agno's AgentOS runtime, so user identity is verified on every request and tools are assigned based on the user's role (owner vs guest). (JWT-based auth + RBAC).
+@context runs on Agno's AgentOS runtime, so user identity is verified on every request and tools are assigned based on the user's role (owner vs guest).
 
 > Built on [Agno](https://docs.agno.com).
 
@@ -70,18 +72,22 @@ The main way to use @context is from an MCP client like Claude Code, Codex, Clau
 
 > Note: @context's MCP server is always on and **owner-only**.
 
-To add it to a CLI client, run:
+Add it to **every MCP client on your machine** in one command:
 
 ```sh
-# Claude Code — user scope, so @context is there in every project
-claude mcp add -s user --transport http context http://localhost:8000/mcp
-claude mcp list            # context: http://localhost:8000/mcp (HTTP) - ✓ Connected
-
-# Codex
-codex mcp add --url http://localhost:8000/mcp context
+python scripts/connect.py
 ```
 
-The **desktop apps** (Claude, ChatGPT) take a manual step: their "Add custom connector" dialog only accepts `https` URLs, so we reach the local server through a small [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) stdio bridge instead. For Claude Desktop, add this to `~/Library/Application Support/Claude/claude_desktop_config.json` (keep any existing keys) and restart the app:
+It finds Claude Code, Codex, and the Claude Desktop app and registers @context with each — running `claude mcp add` / `codex mcp add` for the CLIs and writing an [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge into `claude_desktop_config.json` for the desktop app (existing keys preserved, a timestamped backup made, anything already set up skipped). `--dry-run` to preview, `--remove` to undo.
+
+Rather do it by hand? The CLI clients are one command each:
+
+```sh
+claude mcp add -s user --transport http context http://localhost:8000/mcp   # Claude Code (user scope)
+codex mcp add --url http://localhost:8000/mcp context                       # Codex
+```
+
+**Claude Desktop** needs that bridge in `claude_desktop_config.json` — its "Add custom connector" dialog only accepts `https` URLs. Add this (keep any existing keys) and restart the app:
 
 ```json
 {
@@ -94,9 +100,9 @@ The **desktop apps** (Claude, ChatGPT) take a manual step: their "Add custom con
 }
 ```
 
-The **web clients** (ChatGPT web, Claude web) can't reach localhost — give them a public HTTPS URL by deploying or tunnelling (`https://<domain>/mcp` + `Authorization: Bearer <JWT>`, the same two paths as Slack).
+**ChatGPT and the web clients** (ChatGPT web, Claude web) can't use a local bridge — ChatGPT only reaches MCP servers as a remote HTTPS connector, and the web clients can't see localhost at all. Give them a public HTTPS URL by deploying or tunnelling (`https://<domain>/mcp` + `Authorization: Bearer <JWT>`, the same two paths as Slack).
 
-[`docs/MCP.md`](docs/MCP.md) has the full per-client guide (CLI scope, deployed-instance auth, the GUI-`PATH` `npx` gotcha) and how it's secured (owner-only, fail-closed, DNS-rebinding protection).
+[`docs/MCP.md`](docs/MCP.md) has the by-hand desktop steps, the deployed/HTTPS connector path (incl. the GUI-`PATH` `npx` gotcha and Windows notes), and how it's secured (owner-only, fail-closed, DNS-rebinding protection).
 
 ## AgentOS UI
 
