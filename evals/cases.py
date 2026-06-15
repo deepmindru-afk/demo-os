@@ -133,7 +133,7 @@ def assert_boundary_is_structural() -> tuple[bool, str]:
 def assert_mcp_server_is_owner_only() -> tuple[bool, str]:
     """Deterministic proof the owner-only MCP server is fail-closed.
 
-    The MCP server (`ask_context`) is the owner's private read/act/file surface
+    The MCP server (`use_context`) is the owner's private read/act/file surface
     over MCP. Its gate (`MCPServerConfig.authorize=_caller_is_owner`, run by
     AgentOS after JWT) must accept the owner and reject everyone else with 401 —
     never fall back to the guest surface. We check that gate's decision function

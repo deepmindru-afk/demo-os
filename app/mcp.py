@@ -2,7 +2,7 @@
 Context MCP server
 ======================
 
-@context comes with a one-tool MCP server (`ask_context`) which lets the owner
+@context comes with a one-tool MCP server (`use_context`) which lets the owner
 read, file, and act through @context from MCP clients — Claude Code, Codex, and
 the Claude / ChatGPT desktop apps.
 
@@ -13,9 +13,9 @@ need a public HTTPS URL — a deploy or an ngrok tunnel (see docs/MCP.md).
 
 The @context mcp server exposes one tool:
 
-- `ask_context(message, session_id?)`
+- `use_context(message, session_id?)`
 
-One tool, not several: `ask_context` runs the real context agent as the owner,
+One tool, not several: `use_context` runs the real context agent as the owner,
 which reads, files, and acts on its own — so the client has one obvious door for
 anything about the owner's work, rather than a read-vs-write routing decision.
 
@@ -33,12 +33,12 @@ from agno.tools import tool
 
 from agents.context import context
 from app.identity import CANONICAL_OWNER_ID, OWNER_IDS
-from app.settings import ask_context_timeout, is_prd
+from app.settings import is_prd, use_context_timeout
 
 # The MCP endpoint path. AgentOS mounts the MCP server at this path.
 MCP_PATH = "/mcp"
 
-ASK_CONTEXT_DESCRIPTION = (
+USE_CONTEXT_DESCRIPTION = (
     "The owner's work brain and first stop for anything about their work life. "
     "Always try this before Gmail, Calendar, Drive, Slack, Linear, or a past-chat "
     "search when the question is about the owner's projects, people, companies, "
@@ -89,8 +89,8 @@ def _caller_is_owner(user_id: str | None) -> bool:
     return resolved.casefold() in OWNER_IDS
 
 
-@tool(name="ask_context", description=ASK_CONTEXT_DESCRIPTION)
-async def ask_context(message: str, user_id: str | None = None, session_id: str | None = None) -> str:
+@tool(name="use_context", description=USE_CONTEXT_DESCRIPTION)
+async def use_context(message: str, user_id: str | None = None, session_id: str | None = None) -> str:
     """Run the real context agent as the owner and return its reply.
 
     `user_id` is injected by AgentOS from the JWT subject and is hidden from the
@@ -109,7 +109,7 @@ async def ask_context(message: str, user_id: str | None = None, session_id: str 
     try:
         result = await asyncio.wait_for(
             context.arun(input=message, user_id=CANONICAL_OWNER_ID, session_id=session_id),
-            timeout=ask_context_timeout(),
+            timeout=use_context_timeout(),
         )
     except (asyncio.TimeoutError, TimeoutError):
         return (
@@ -146,7 +146,7 @@ def context_mcp_config() -> MCPServerConfig:
     """Configuration for the @context MCP server — passed to ``AgentOS(mcp_config=...)``.
 
     Owner-only, single-tool surface:
-      - ``tools=[ask_context]`` — the one tool the server exposes.
+      - ``tools=[use_context]`` — the one tool the server exposes.
       - ``enable_builtin_tools=False`` — none of AgentOS's 19 built-ins (no
         session/memory CRUD over MCP; the owner uses chat UI for that).
       - ``authorize=_caller_is_owner`` — 401s non-owners after JWT, before the
@@ -156,7 +156,7 @@ def context_mcp_config() -> MCPServerConfig:
         ``_mcp_transport_security()`` helper.
     """
     return MCPServerConfig(
-        tools=[ask_context],
+        tools=[use_context],
         enable_builtin_tools=False,
         authorize=_caller_is_owner,
         allowed_hosts=_allowed_hosts(),

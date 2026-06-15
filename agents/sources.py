@@ -284,7 +284,7 @@ def _create_calendar_provider() -> ContextProvider | None:
 # Owner tool hardening
 # ---------------------------------------------------------------------------
 #
-# A rundown fans `ask_context` out to several provider sub-agents back to back, and
+# A rundown fans `use_context` out to several provider sub-agents back to back, and
 # agno puts no timeout around each one. We time-box every read here so a slow source
 # degrades to a one-line "skipped" and the rest of the brief still lands.
 #

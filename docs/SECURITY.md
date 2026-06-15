@@ -213,7 +213,7 @@ approval-gated like the calendar — see [`docs/GOOGLE.md`](GOOGLE.md).)
 ### L7 — The MCP server is owner-only, fail-closed
 
 The MCP server ([`app/mcp.py`](../app/mcp.py), [`docs/MCP.md`](MCP.md)) is
-**on by default** and exposes one tool, `ask_context`, so the owner can drive
+**on by default** and exposes one tool, `use_context`, so the owner can drive
 `@context` from MCP clients — the CLI clients (Claude Code, Codex) register it on
 localhost with one command, the desktop apps through a small stdio bridge. It is
 **not** a new trust boundary: it's the *same*
@@ -236,7 +236,7 @@ endpoint — the gate is in code, before the model runs:
   gate 401s everyone.
 - **Owner identity threaded through.** AgentOS injects the verified JWT `sub`
   as the tool's `user_id` and hides it from the client-facing schema, so a caller
-  can never supply or spoof it; `ask_context` re-checks it (`_caller_is_owner`)
+  can never supply or spoof it; `use_context` re-checks it (`_caller_is_owner`)
   as defense in depth, then runs `context.arun(…, user_id=<canonical owner>)`, so
   `is_owner` is true and `context_tools` hands over the full read/act surface —
   the owner acts *as* the owner. The gated act tool (calendar) still pauses for
