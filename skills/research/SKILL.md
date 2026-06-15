@@ -1,10 +1,10 @@
 ---
 name: research
-description: Research a topic and file the result — sweep what we already know (knowledge base, crm, and slack when connected), go to the web for current and external background, pull the Agno docs when the topic is framework-related, then write a clear sourced brief and FILE it into the knowledge base with update_knowledge. Labels what came from the web versus our own notes. Use for "research X and save it", "look into X and write it up", "find out what's known about X and file it", "write up a brief on X".
+description: Research a topic and file the result — sweep what we already know (knowledge base, crm, and slack when connected), go to the web for current and external background, then write a clear sourced brief and FILE it into the knowledge base with update_knowledge. Labels what came from the web versus our own notes. Use for "research X and save it", "look into X and write it up", "find out what's known about X and file it", "write up a brief on X".
 metadata:
   version: "1.0.0"
   author: context
-  tags: ["research", "knowledge", "web", "agno", "crm", "slack", "filing"]
+  tags: ["research", "knowledge", "web", "crm", "slack", "filing"]
 ---
 # Research
 
@@ -36,10 +36,10 @@ nothing leaves.
    others approach it. Keep queries to the public subject, not the owner's
    private notes. Skip the web only when the topic is purely internal and the
    internal sweep already answers it.
-4. **Pull the Agno docs when the topic is framework-related.** If the question
+4. **Read the codebase when the topic is framework-related.** If the question
    touches how @context is built or how Agno does something (a toolkit, a
-   provider, the scheduler, AgentOS), `query_agno` for the grounded answer, and
-   `query_workspace` to see how this repo uses it.
+   provider, the scheduler, AgentOS), `query_workspace` to see how this repo uses
+   it, and `query_web` for anything the code doesn't answer.
 5. **Synthesize a clear, sourced brief.** Lead with the answer. Attribute every
    claim to where it came from, and keep web background visibly separate from our
    own record: tag lines `(from web)`, `(on file)`, or `(auto-summarized,

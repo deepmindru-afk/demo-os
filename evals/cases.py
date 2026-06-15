@@ -78,7 +78,6 @@ _OWNER_ONLY_TOOLS = (
     "update_knowledge",
     "query_workspace",
     "query_web",
-    "query_agno",
     "rundown",
     "acknowledge",
     "queue_reminders",

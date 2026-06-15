@@ -2,7 +2,7 @@
 Context's Provider Registry
 ===========================
 
-Wiring for the context providers available to Context. The structured database (`crm`), the knowledge base (`knowledge`), the workspace, web, and agno (read-only docs for the framework @context is built on) are always on; Slack, Gmail, and Calendar are added to the agent when credentials are set.
+Wiring for the context providers available to Context. The structured database (`crm`), the knowledge base (`knowledge`), the workspace, and web are always on; Slack, Gmail, and Calendar are added to the agent when credentials are set.
 
 Each provider exposes at most two tools to the main agent — `query_<id>` and `update_<id>` — so the tool surface stays linear at 2N as sources grow.
 
@@ -17,7 +17,6 @@ from os import getenv
 from pathlib import Path
 
 from agno.context.database import DatabaseContextProvider
-from agno.context.mcp import MCPContextProvider
 from agno.context.provider import ContextProvider
 from agno.context.slack import SlackContextProvider
 from agno.context.web.parallel import ParallelBackend
@@ -60,7 +59,6 @@ def create_context_providers() -> list[ContextProvider]:
     configured: list[ContextProvider] = [
         _create_web_provider(),
         _create_workspace_provider(),
-        _create_agno_provider(),
         _create_crm_provider(),
         _create_knowledge_provider(),
     ]
@@ -127,30 +125,6 @@ def _create_workspace_provider() -> WorkspaceContextProvider:
         root=REPO_ROOT,
         model=default_model(),
         exclude_patterns=[*DEFAULT_EXCLUDE_PATTERNS, "*_token.json", "google-service-account.json"],
-    )
-
-
-def _create_agno_provider() -> MCPContextProvider:
-    """The `agno` source — read-only docs for the sdk @context is built on.
-
-    Wraps the keyless agno-docs MCP server (``https://docs.agno.com/mcp``) behind a
-    single ``query_agno`` tool. Pairs with ``query_workspace`` (this repo's own
-    source): together they let @context reason about *how it's built* and *how it
-    could be improved*.
-
-    Improvements identified are written as knowledge-base specs for coding agents
-    to implement.
-
-    Always-on and keyless, like the `web` source; if the docs MCP is unreachable,
-    ``asetup`` degrades gracefully (logs, retries on next call).
-    """
-    return MCPContextProvider(
-        server_name="agno",
-        id="agno",
-        name="Agno",
-        transport="streamable-http",
-        url="https://docs.agno.com/mcp",
-        model=default_model(),
     )
 
 
