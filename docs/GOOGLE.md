@@ -1,44 +1,26 @@
-# Connecting Gmail and Google Calendar
+# Connecting @context to Gmail and Google Calendar
 
-Connect your Google account and @context can see what's actually on your
-calendar and in your inbox while it preps you — and it can write the follow-up
-email and put events on your calendar. Two providers switch on once credentials
-are set:
-
-| Provider | Read | Write |
-|---|---|---|
-| `gmail` | `query_gmail` — inbox search, threads, unread | `update_gmail` — writes a **draft** (never sends) |
-| `calendar` | `query_calendar` — events, availability | `update_calendar` — create / move / delete events |
+Connect your Google account and @context can see what's actually on your calendar and in your inbox while it preps you — and it can write the follow-up email and put events on your calendar.
 
 **The one thing to know about writes:**
 
-- **Email only ever drafts.** `update_gmail` writes the email into your Gmail
-  **Drafts** — fully formed, for you to skim, edit, and send. @context can't
-  send; you do, from Gmail. So you keep the pen (fix the wording, drop the em
-  dashes) and nothing leaves without you.
-- **Calendar asks first.** `update_calendar` changes the real calendar, so each
-  change pauses for your okay — it lands in your **approvals queue** (the
-  approvals page in the AgentOS UI) and only runs once you confirm.
-
-(If you'd rather @context send email for you, see
-[Letting @context send](#letting-context-send-email) at the end.)
+- **Email only ever drafts.** `update_gmail` writes the email into your Gmail **Drafts** — fully formed, for you to skim, edit, and send. @context can't send.
+- **Calendar asks first.** `update_calendar` changes the real calendar, so each change pauses for your approval — it lands in your **approvals queue** (the approvals page in the AgentOS UI) and only runs once you confirm.
 
 ## Setup (a few minutes, one time)
-
-This uses your own Google account — personal `@gmail.com` or Workspace, either
-works.
 
 ### 1. Create the Google app
 
 This is a one-time thing in the [Google Cloud Console](https://console.cloud.google.com).
-"The app" here is just an entry you register with Google that says "this program
-may ask for access to my account" — it's yours, it lives in your Google project,
-and it's what the credentials below come from.
 
-1. Create (or pick) a project.
-2. Enable the **Gmail API** and the **Google Calendar API**.
-3. Configure the **OAuth consent screen** and add these five scopes — exactly
-   the ones @context uses, nothing more:
+"The app" here says "this program may ask for access to my account".
+
+The app belongs to you and lives in your Google project.
+
+1. Open https://console.cloud.google.com and, using the account switcher at the top right, select the Google account you want to connect to @context.
+2. In the project dropdown in the top bar, pick a project — or click **New Project** to make one.
+3. **Turn on the two APIs.** Go to **APIs & Services → Library**. Search **Gmail API**, open it, click **Enable**. Go back to the Library and do the same for **Google Calendar API**. Each takes a few seconds; nothing else to fill in.
+4. **Set up the consent screen and add the scopes.** Go to **APIs & Services → OAuth consent screen** (newer projects label this **Google Auth Platform**) and work through the prompts — app name, your email for user support, your email for the developer contact. It also asks for a **User type** (Internal vs. External); [section 2 below](#2-make-the-connection-last-do-this--its-the-fix-for-weekly-re-logins) covers which to pick. When you reach the **Scopes** step (called **Data Access** in the newer UI), click **Add or remove scopes**, paste the five lines below into the **Manually add scopes** box, click **Add to table**, then **Update**:
    ```
    https://www.googleapis.com/auth/gmail.readonly
    https://www.googleapis.com/auth/gmail.modify
@@ -46,7 +28,8 @@ and it's what the credentials below come from.
    https://www.googleapis.com/auth/calendar.readonly
    https://www.googleapis.com/auth/calendar
    ```
-4. Create credentials → **OAuth client ID** → application type **Desktop app**.
+   You have to paste them — Gmail and Calendar are *sensitive* scopes, so they don't show up in the checklist of suggestions; the manual box is the only way to add them.
+5. **Create the credentials.** Go to **APIs & Services → Credentials → Create credentials → OAuth client ID**, choose application type **Desktop app**, and create it. Keep the **client ID** and **client secret** it shows you — they go in `.env` in step 3 below.
 
 ### 2. Make the connection last (do this — it's the fix for weekly re-logins)
 
