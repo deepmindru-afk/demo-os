@@ -48,7 +48,7 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Agent | What it does | Features |
 |-------|-------------|----------|
 | [**Sage**](agents/mcp/) | Answers questions about Agno via live docs over MCP | MCPTools, Model Context Protocol |
-| [**Glass**](agents/helpdesk/) | IT operations helpdesk with safety guardrails | HITL (confirmation, user input, external execution), PII + injection guardrails, pre/post hooks |
+| [**Voyager**](agents/travel/) | Travel booking concierge with safety guardrails | HITL (confirmation, user input, external execution), PII + injection guardrails, pre/post hooks |
 | [**Ledger**](agents/approvals/) | Compliance agent gating sensitive operations | @approval decorator, blocking confirmation, audit trail |
 | [**Quill**](agents/reporter/) | Web research + report generator | Exa research tools (search, company, crawl, fetch), FileGenerationTools (HTML) |
 | [**Iris**](agents/studio/) | Multimodal media generation and analysis | DalleTools, FalTools, ElevenLabsTools, LumaLabTools, conditional tool loading |
@@ -60,7 +60,7 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 |------|------|-------------|----------|
 | [**Dash**](agents/dash/) | coordinate | Self-learning data analyst (Analyst + Engineer) | Dual schema, write guard, read-only engine, LearningMachine |
 | [**Atlas**](teams/research/) | coordinate | Research team (Analyst + Investigator + Writer) | ParallelTools, Exa MCP, multi-specialist synthesis |
-| [**Quorum** / **Switch** / **Chorus** / **Foreman**](teams/investment/) | coordinate, route, broadcast, tasks | 7-agent investment committee using Gemini | Multi-model (Gemini), YFinanceTools, FileTools, LearningMachine |
+| [**Chorus**](teams/investment/) | broadcast | Investment committee — 4 analysts assess a target in parallel | YFinanceTools, Exa MCP, LearningMachine |
 
 ### Workflows
 
@@ -78,12 +78,12 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 |---------|-------|
 | RAG / hybrid search | Dash |
 | MCP tools | Sage, Dash, Pulse |
-| HITL — confirmation | Glass, Ledger |
-| HITL — user input | Glass |
-| HITL — external execution | Glass |
-| Guardrails (PII, injection) | Glass |
-| Pre/post hooks | Glass |
-| User feedback (ask_user) | Glass |
+| HITL — confirmation | Voyager, Ledger |
+| HITL — user input | Voyager |
+| HITL — external execution | Voyager |
+| Guardrails (PII, injection) | Voyager |
+| Pre/post hooks | Voyager |
+| User feedback (ask_user) | Voyager |
 | Approval — blocking | Ledger |
 | Approval — audit trail | Ledger |
 | Reasoning tools | Dash |
@@ -100,10 +100,8 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Multi-model (Gemini) | Investment |
 | YFinance tools | Investment |
 | Session state + agentic state | Pilot |
-| Team — coordinate | Dash, Atlas, Quorum |
-| Team — route | Switch |
+| Team — coordinate | Dash, Atlas |
 | Team — broadcast | Chorus |
-| Team — tasks | Foreman |
 | Workflow — parallel | Dawn, Pulse, Press |
 | Workflow — loop | Press |
 | Workflow — router | Beacon |

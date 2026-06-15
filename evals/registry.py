@@ -34,11 +34,11 @@ ENTITIES: dict[str, Entity] = {
         instruction_file="agents/mcp/instructions.py",
         definition_file="agents/mcp/agent.py",
     ),
-    "glass": Entity(
-        id="glass",
+    "voyager": Entity(
+        id="voyager",
         type="agent",
-        instruction_file="agents/helpdesk/instructions.py",
-        definition_file="agents/helpdesk/agent.py",
+        instruction_file="agents/travel/instructions.py",
+        definition_file="agents/travel/agent.py",
     ),
     "ledger": Entity(
         id="ledger",
@@ -81,29 +81,8 @@ ENTITIES: dict[str, Entity] = {
         definition_file="teams/research/team.py",
         requires=["EXA_API_KEY"],
     ),
-    "quorum": Entity(
-        id="quorum",
-        type="team",
-        instruction_file="teams/investment/instructions.py",
-        definition_file="teams/investment/team.py",
-        requires=["EXA_API_KEY"],
-    ),
-    "switch": Entity(
-        id="switch",
-        type="team",
-        instruction_file="teams/investment/instructions.py",
-        definition_file="teams/investment/team.py",
-        requires=["EXA_API_KEY"],
-    ),
     "chorus": Entity(
         id="chorus",
-        type="team",
-        instruction_file="teams/investment/instructions.py",
-        definition_file="teams/investment/team.py",
-        requires=["EXA_API_KEY"],
-    ),
-    "foreman": Entity(
-        id="foreman",
         type="team",
         instruction_file="teams/investment/instructions.py",
         definition_file="teams/investment/team.py",
