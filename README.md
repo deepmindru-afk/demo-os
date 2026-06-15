@@ -19,30 +19,31 @@ It plugs into clients like claude, chatGPT, claude code, and codex, and gives th
 
 @context has five jobs.
 
-1. **Maintain a crm.** Share *"met Kyle from Agno, wants a partnership, follow up next week"* and it stores a contact, a note, and a dated reminder without you picking forms or fields.
-2. **Maintain a knowledge base.** @context can write product specs, parse notes from customer interviews, manage project briefs and conduct deep research, and maintain it all in a neatly organized knowledge base.
-3. **Run your day, plan your week, prep for what's next.** @context can run playbooks to run your day, plan your week, and prep for meetings. @context comes with a few playbooks but you should definitely customize and add your own. Here are the included ones:
-   - **Rundown** *("what's on today?")* - a prioritized brief of things on your plate. One digest instead of five apps: the updates teammates (and their agents) left in your queue, reminders that are due, today's meetings, the emails you missed, and the Slack threads worth a look.
-   - **Week plan** *("what's my week?")* - priorities for the week. Runs sunday evening and lands in your DMs, so you start the week with 🔥
-   - **Prep** *("prep for my 2pm with Kyle")* - a tight pre-meeting brief: who they are, notes, past threads, what's still open, email and Slack exchanges, and - for not known contacts - public background pulled from the web.
+1. **Maintain a CRM.** Share *"met Kyle from Agno, wants a partnership, follow up next week"*, and it stores a contact, a note, and a dated reminder without you picking forms or fields.
+2. **Maintain a knowledge base.** @context writes product specs, parses customer interview notes, manages project briefs, and runs deep research, then keeps it all neatly organized in one place.
+3. **Run your day, plan your week, prep ahead.** @context runs repeatable playbooks to make things easier. A few come built in, and you should customize them and add your own. Here are the included ones:
+   - **Rundown** *("what's on today?")*: a prioritized brief of things on your plate. One digest instead of five apps: the updates teammates (and their agents) left in your queue, reminders that are due, today's meetings, the emails you missed, and the Slack threads worth a look.
+   - **Week plan** *("what's my week?")*: priorities for the week. Runs Sunday evening and lands in your DMs, so you start the week with 🔥
+   - **Prep** *("prep for my 2pm with Kyle")*: a tight pre-meeting brief covering who they are, notes, past threads, what's still open, email and Slack exchanges, and public background from the web for contacts you don't know yet.
 
-   @context runs these playbooks on demand or on a schedule: the daily rundown and weekly plan will DM the brief straight to you.
-4. **Represent you.** Your teammates (and their agents) can share non-urgent updates with your @context. A teammate types *"@your-context my claude fixed the auth bug"* and it's saved to your queue - surfacing in your next rundown. It works outbound too: your @context can message people and channels on Slack on your behalf, and @-mention a teammate's @context to drop an update in *their* queue - which is how a team's contexts talk to each other (the [context network](docs/NETWORK.md)). This keeps your signal-to-noise high.
-5. **Draft and schedule.** Connect [Gmail and Calendar](docs/GOOGLE.md) and @context reads your real inbox and calendar, drafts your follow-ups straight into Gmail for you to send, and sends calendar changes to your approvals queue. It only ever *drafts* email — it never sends on its own.
+   @context runs these playbooks on demand or on a schedule. The daily rundown and weekly plan DM the brief straight to you.
+4. **Represent you.** Your teammates (and their agents) can share non-urgent updates with your @context. A teammate types *"@your-context my claude fixed the auth bug"*, and it lands in your queue and surfaces in your next rundown. It works outbound too. Your @context can message people and channels on Slack on your behalf, and @-mention a teammate's @context to drop an update in *their* queue. That's how a team's contexts talk to each other (the [context network](docs/NETWORK.md)). This keeps your signal-to-noise high.
+5. **Draft and schedule.** Connect [Gmail and Calendar](docs/GOOGLE.md), and @context reads your real inbox and calendar, drafts your follow-ups straight into Gmail for you to send, and sends calendar changes to your approvals queue.
 
 ## Security
 
-@context is an alter ego with access to a lot of sensitive information and the security boundaries need to be AIRTIGHT.
+@context is an alter ego with access to a lot of sensitive information, so the security boundaries need to be AIRTIGHT.
 
-Agno's AgentOS makes it possible to:
-1. Verify the user making the request. AgentOS extracts the `user_id` from the JWT or Slack request. This allows us to determine if the request is from the owner or a guest.
-2. Based on the user's role (owner or guest), we can choose the right tools to add to the agent.
+Agno's AgentOS makes two things possible:
 
-This security model enables us to design a system that permits anyone to write to it but only you can read or act through it. To everyone else it is a polite notetaker that only captures. Although it does remember who it is talking to: each caller gets their own user-memory, kept entirely separate from yours.
+1. **Verify the user making the request.** AgentOS extracts the `user_id` from the JWT or the Slack request, so we can tell whether the caller is the owner or a guest.
+2. **Assign tools by role.** Based on that, we add the right tools to the agent.
 
-To push our security boundary even further, acting in the outside world is gated. Changing your calendar (`update_calendar`) pauses for explicit approval before it runs — AgentOS's `requires_confirmation` / `approval_type="required"` settings. Email goes a step further: `update_gmail` can *only* draft (it never sends), so the follow-up waits in your Gmail drafts for you to review and send.
+This model lets us build a system that anyone can write to, but only you can read from or act through. To everyone else, it is a polite notetaker that only captures. Although it does remember who it is talking to: each caller gets their own user-memory, kept entirely separate from yours.
 
-Finally, everything runs locally or in your own cloud, inside your VPC, with every byte of data (context's database, context's knowledge base, context's inbox) being stored in your own database.
+External actions are double gated. Changing your calendar (`update_calendar`) pauses for explicit approval before it runs, using AgentOS's `requires_confirmation` and `approval_type="required"` settings. Email goes a step further. `update_gmail` can *only* draft, so the follow-up waits in your Gmail drafts for you to review and send. It never sends on its own.
+
+Everything runs locally or in your own cloud, inside your VPC. Every byte of data lives in your own database: the CRM, the knowledge base, and the inbox.
 
 Read [`docs/SECURITY.md`](docs/SECURITY.md) for more details.
 
@@ -56,9 +57,8 @@ cd context
 
 # Configure credentials
 cp example.env .env
-# Open .env: set OPENAI_API_KEY, and set OWNER_ID to the email you sign in to
-# os.agno.com with (that is how the UI resolves you as the owner).
-# OWNER_NAME is an optional display name, set it as your or your company's name.
+# Open .env: set OPENAI_API_KEY, and set OWNER_ID to the email you sign in to os.agno.com with.
+# OWNER_NAME is an optional display name, set it as your name.
 
 # Run on Docker
 docker compose up -d --build
@@ -68,28 +68,32 @@ Confirm it is live at [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ## MCP server
 
-The main way to use @context is from an MCP client like Claude Code, Codex, Claude, and ChatGPT.
+The main way to use @context is from an MCP client like Claude Code, Codex, Claude, and ChatGPT. Connect your favorite AI tools to @context's MCP server at `http://localhost:8000/mcp`.
 
-@context comes with an MCP server at `http://localhost:8000/mcp`. I use it with claude code to manage product spects, which another claude code or codex instance can implement. I also use it with desktop apps (Claude, ChatGPT) and web clients (ChatGPT web, Claude web).
+> Note: @context's MCP server is **owner-only**, so keep an eye on security.
 
-> Note: @context's MCP server is **owner-only**, and runs by default.
+### Add @context to every MCP client automatically
 
-Add it to **every MCP client on your machine** in one command:
+Add @context to **every MCP client on your machine** with one command:
 
 ```sh
+# Add @context to every MCP client
 python scripts/connect.py
 ```
 
-It finds Claude Code, Codex, and the Claude Desktop app and registers @context with each — running `claude mcp add` / `codex mcp add` for the CLIs and writing an [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge into `claude_desktop_config.json` for the desktop app (existing keys preserved, a timestamped backup made, anything already set up skipped). `--dry-run` to preview, `--remove` to undo.
+The script finds Claude Code, Codex, and the Claude Desktop app, and registers @context with each. It runs `claude mcp add` and `codex mcp add` for the CLIs, and writes an [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge into `claude_desktop_config.json` for the desktop app. Use `--dry-run` to preview and `--remove` to undo.
 
-Rather do it by hand? The CLI clients are one command each:
+### Add @context to MCP clients manually
+
+For CLI clients, run the following commands:
 
 ```sh
 claude mcp add -s user --transport http context http://localhost:8000/mcp   # Claude Code (user scope)
+
 codex mcp add --url http://localhost:8000/mcp context                       # Codex
 ```
 
-**Claude Desktop** needs that bridge in `claude_desktop_config.json` — its "Add custom connector" dialog only accepts `https` URLs. Add this (keep any existing keys) and restart the app:
+**Claude Desktop** needs that bridge in `claude_desktop_config.json`, because its "Add custom connector" dialog only accepts `https` URLs. Add this (keep any existing keys) and restart the app:
 
 ```json
 {
@@ -102,13 +106,11 @@ codex mcp add --url http://localhost:8000/mcp context                       # Co
 }
 ```
 
-**ChatGPT and the web clients** (ChatGPT web, Claude web) can't use a local bridge — ChatGPT only reaches MCP servers as a remote HTTPS connector, and the web clients can't see localhost at all. Give them a public HTTPS URL by deploying or tunnelling (`https://<domain>/mcp` + `Authorization: Bearer <JWT>`, the same two paths as Slack).
-
-[`docs/MCP.md`](docs/MCP.md) has the by-hand desktop steps, the deployed/HTTPS connector path (incl. the GUI-`PATH` `npx` gotcha and Windows notes), and how it's secured (owner-only, fail-closed, DNS-rebinding protection).
+See [`docs/MCP.md`](docs/MCP.md) for more details.
 
 ## AgentOS UI
 
-@context runs on AgentOS, which comes with a web UI for interacting with @context. Use the AgentOS UI to chat with @context, view sessions, approve actions and more.
+@context runs on AgentOS, which comes with a web UI for managing and monitoring @context. Use the AgentOS UI to chat with @context, view sessions, approve actions and more.
 
 <img width="3066" height="2046" alt="Local Context AgentOS" src="https://github.com/user-attachments/assets/ee4b789a-1612-4b5d-9bd4-37e68ede91c4" />
 
@@ -155,13 +157,13 @@ This auto-managing crm is @context's superpower. Use it to manage projects, meet
 - *"What reminders do I have coming up?"*
 - *"Tell me about Northwind."*
 
-@context's database lives in the `crm` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest's can't see this data. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
+@context's database lives in the `crm` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest can't see this data. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
 
 ## Run in production
 
 @context runs anywhere that runs a Docker container.
 
-The repo includes script to run on Railway. The `scripts/railway/up.sh` script will run @context as a service with Postgres on the same private network. It reads credentials from `.env.production`, and creates a public domain you connect to in the AgentOS UI.
+The repo includes a script to run on Railway. The `scripts/railway/up.sh` script will run @context as a service with Postgres on the same private network. It reads credentials from `.env.production`, and creates a public domain you connect to in the AgentOS UI.
 
 > Requires the [Railway CLI](https://docs.railway.com/cli#installing-the-cli)
 
@@ -173,7 +175,7 @@ Create the production environment file.
 cp .env .env.production
 ```
 
-The deploy scripts read `.env.production` first and falls back to `.env` if it doesn't exist.
+The deploy scripts read `.env.production` first and fall back to `.env` if it doesn't exist.
 
 ### 2. Deploy
 
