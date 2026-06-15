@@ -225,6 +225,38 @@ def acknowledge(run_context: RunContext, update_ids: list[int]) -> str:
     return f"Acknowledged {count} update(s)."
 
 
+def queue_owner_note(title: str, body: str = "", *, source: str = "system", work_status: str = "done") -> bool:
+    """File a note straight into the owner's inbound queue — no caller, no model.
+
+    The system-side counterpart to `submit_update`: a background job (e.g. a digest
+    whose Slack DM didn't go out) lands content where the next rundown will surface
+    it, so nothing is silently lost. Returns whether it was filed (False when no
+    owner is configured). Owner-internal, so `from_person` is `@context`, not a guest.
+    """
+    if CANONICAL_OWNER_ID is None:
+        return False
+    if work_status not in WORK_STATUSES:
+        work_status = "done"
+
+    values: dict[str, object] = {
+        "title": title,
+        "body": body,
+        "from_person": "@context",
+        "source": source,
+        "work_status": work_status,
+        "ack_status": "new",
+        "user_id": CANONICAL_OWNER_ID,
+    }
+    columns = ", ".join(values)
+    params = ", ".join(f":{name}" for name in values)
+    stmt = text(f"INSERT INTO {_UPDATES} ({columns}) VALUES ({params})")
+
+    engine = get_sql_engine()
+    with engine.begin() as conn:
+        conn.execute(stmt, values)
+    return True
+
+
 # ---------------------------------------------------------------------------
 # The guest surface
 # ---------------------------------------------------------------------------

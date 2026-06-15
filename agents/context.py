@@ -77,6 +77,24 @@ def context_instructions(run_context: RunContext | None = None) -> str:
     )
 
 
+# A per-run signal (set in run metadata) that this is a read-only run: the
+# scheduled digests use it so the playbook can read but can't write.
+READ_ONLY_FLAG = "read_only"
+
+
+def _is_read_only(run_context: RunContext | None) -> bool:
+    """Whether this run was flagged read-only (the scheduled digests). Off by default."""
+    metadata = getattr(run_context, "metadata", None) or {}
+    return bool(metadata.get(READ_ONLY_FLAG))
+
+
+def _is_write_tool(name: str) -> bool:
+    """A tool that mutates state: every source write (`update_*`, which includes
+    the calendar act tool) plus the owner-queue writes. Reads (`query_*`,
+    `list_contexts`), the rundown brief, and the skills are not writes."""
+    return name.startswith("update_") or name in {"acknowledge", "queue_reminders"}
+
+
 def context_tools(run_context: RunContext | None = None) -> list:
     """Build Context's tool list based on the caller's identity.
 
@@ -92,6 +110,9 @@ def context_tools(run_context: RunContext | None = None) -> list:
         tools += [list_contexts, rundown, acknowledge, queue_reminders]
         if _skills is not None:
             tools += _skills.get_tools()
+        # Strip write tools for read-only runs (the scheduled digests).
+        if _is_read_only(run_context):
+            tools = [t for t in tools if not _is_write_tool(getattr(t, "name", ""))]
         # The approval gate on acting as the owner: tools that reach the
         # outside world (send email, change the calendar) pause the run for
         # explicit confirmation before they execute. `approval_type="required"`

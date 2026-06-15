@@ -8,24 +8,13 @@ moment it's due instead of waiting to be asked.
 
 Each digest is a one-step workflow (the objects at the bottom of this module),
 registered with AgentOS and run by its schedule (see `app/schedules.py`):
-1. Run the playbook as the owner. The scheduled run arrives as `__scheduler__`,
-   which `is_owner` honors, and we invoke the agent under the canonical owner id so
-   the playbook gets the full owner surface and keys to the right data.
-2. DM the result to the owner via `workflows.notify.dm_owner` — the same self-
-   notification path the reminder sweep uses. Ungated and deterministic: messaging
-   yourself is not an outward act, so no approval gate fires and unattended runs
-   complete end to end.
-
-The playbooks are read-only (they pull and format, they never send), so a
-scheduled digest never trips an act tool. We tell the agent explicitly to return
-the brief as text rather than post it anywhere — delivery is `dm_owner`'s job, not
-the model's.
 """
 
 from agno.run import RunContext
 from agno.workflow.step import Step, StepInput, StepOutput
 from agno.workflow.workflow import Workflow
 
+from agents.inbox import queue_owner_note
 from app.identity import CANONICAL_OWNER_ID, is_owner
 from db import get_postgres_db
 from workflows.notify import dm_owner
@@ -43,18 +32,20 @@ _WEEKLY_PROMPT = (
 
 
 def _run_playbook(prompt: str) -> str:
-    """Invoke the context agent on `prompt` as the owner and return its text."""
+    """Invoke the context agent on `prompt` as the owner, read-only, return its text."""
     # Imported lazily: agents.context imports across the package, so deferring the
     # import keeps this module cheap to load and avoids any import-order surprise.
-    from agents.context import context
+    from agents.context import READ_ONLY_FLAG, context
 
-    result = context.run(input=prompt, user_id=CANONICAL_OWNER_ID)
+    # READ_ONLY_FLAG strips every write tool for this run (see context_tools), so the
+    # playbook can read but can't post the brief itself or touch the calendar.
+    result = context.run(input=prompt, user_id=CANONICAL_OWNER_ID, metadata={READ_ONLY_FLAG: True})
     content = getattr(result, "content", None)
     return str(content).strip() if content else ""
 
 
 def _run_digest(prompt: str, label: str, run_context: RunContext) -> StepOutput:
-    """Shared core: gate, run the playbook as owner, DM the result, report."""
+    """Shared core: gate, run the playbook as owner, deliver the result, report."""
     if not is_owner(run_context):
         return StepOutput(content=f"The {label} digest is only available to the owner.")
     if CANONICAL_OWNER_ID is None:
@@ -64,8 +55,16 @@ def _run_digest(prompt: str, label: str, run_context: RunContext) -> StepOutput:
     if not brief:
         return StepOutput(content=f"The {label} digest produced no content; nothing sent.")
 
-    sent = dm_owner(brief)
-    status = "DM'd to the owner" if sent else "generated (Slack DM unavailable, not sent)"
+    # Try the Slack DM first; if it doesn't go out (Slack down or unconfigured),
+    # fall back to the inbound queue so the brief surfaces on the next rundown
+    # rather than being silently lost. The queue is the durable channel; the DM
+    # is the nudge on top of it.
+    if dm_owner(brief):
+        status = "DM'd to the owner"
+    elif queue_owner_note(f"{label.capitalize()} digest", brief, source="digest"):
+        status = "filed to your inbound queue (Slack DM unavailable)"
+    else:
+        status = "generated (no delivery channel available, not sent)"
     return StepOutput(content=f"{label.capitalize()} digest {status}.")
 
 
