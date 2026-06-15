@@ -38,15 +38,21 @@ if [[ "$WAIT_FOR_DB" = true || "$WAIT_FOR_DB" = True ]]; then
     echo ""
 fi
 
-# Google service account via env — for platforms with no secret-file mounts
-# (Railway). Base64 the JSON key into GOOGLE_SERVICE_ACCOUNT_JSON_B64 and the
-# entrypoint materializes it; an explicit GOOGLE_SERVICE_ACCOUNT_FILE wins.
-if [[ -n "$GOOGLE_SERVICE_ACCOUNT_JSON_B64" && -z "$GOOGLE_SERVICE_ACCOUNT_FILE" ]]; then
-    echo "$GOOGLE_SERVICE_ACCOUNT_JSON_B64" | base64 -d > /app/google-service-account.json
-    export GOOGLE_SERVICE_ACCOUNT_FILE=/app/google-service-account.json
-    echo -e "    ${DIM}Google service account written from GOOGLE_SERVICE_ACCOUNT_JSON_B64.${NC}"
-    echo ""
-fi
+# Gmail/Calendar OAuth token caches via env — the token files
+# don't survive a redeploy on a baked image (Railway), so ship them as base64
+# and the entrypoint restores them at startup. Paths mirror the defaults in
+# agents/sources.py (GMAIL_TOKEN_FILE / CALENDAR_TOKEN_FILE override them). A
+# token already on disk (e.g. mounted in dev via .:/app) wins and isn't touched.
+materialize_token() {
+    local b64="$1" path="$2" label="$3"
+    if [[ -n "$b64" && ! -f "$path" ]]; then
+        echo "$b64" | base64 -d > "$path"
+        echo -e "    ${DIM}${label} token restored from base64 → ${path}.${NC}"
+        echo ""
+    fi
+}
+materialize_token "$GMAIL_TOKEN_JSON_B64" "${GMAIL_TOKEN_FILE:-/app/gmail_token.json}" "Gmail"
+materialize_token "$CALENDAR_TOKEN_JSON_B64" "${CALENDAR_TOKEN_FILE:-/app/calendar_token.json}" "Calendar"
 
 case "$1" in
     chill)
