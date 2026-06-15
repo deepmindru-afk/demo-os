@@ -103,6 +103,29 @@ Set both `KNOWLEDGE_REPO_URL` and `KNOWLEDGE_GITHUB_TOKEN` to enable Git; set
 neither and it falls back to the local folder. (Set only one and it warns and
 falls back.)
 
+### Set it up
+
+1. **Create a private repo** for the knowledge base — e.g.
+   `your-username/your-context`. Add a README so the default branch exists.
+2. **Mint a fine-grained GitHub token** scoped to just that repo
+   ([github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens)):
+   - **Repository access** → **Only select repositories** → the repo from step 1.
+   - **Permissions** → **Contents** → **Read and write**.
+   - **Expiration** → **No expiration** (otherwise the push breaks when it lapses).
+3. **Set the two vars** — in `.env` locally, or `.env.production` for Railway:
+   ```sh
+   KNOWLEDGE_REPO_URL=https://github.com/you/your-specs.git
+   KNOWLEDGE_GITHUB_TOKEN=ghp_...
+   ```
+4. **Deploy.** For Railway, sync and let it redeploy:
+   ```sh
+   ./scripts/railway/env-sync.sh
+   ```
+
+On boot the provider switches to `GitBackend` — confirm with the
+`Knowledge base: GitBackend (<repo>)` line in the logs. From then on every
+`update_knowledge` auto-commits and pushes.
+
 ## How it works
 
 The knowledge base is an Agno `WikiContextProvider` wired in

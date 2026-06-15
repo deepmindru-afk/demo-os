@@ -94,9 +94,13 @@ async def lifespan(app):  # type: ignore[no-untyped-def]
 # Create AgentOS
 # ---------------------------------------------------------------------------
 # User isolation scopes the OS REST endpoints (sessions / memory / runs) to the
-# verified JWT user. Only takes effect when authorization is on (prod). The
-# owner-only MCP server reuses this same config for its JWT layer.
-authorization_config = AuthorizationConfig(user_isolation=True)
+# verified JWT user. Only takes effect when authorization is on (prod).
+_self_verification_key = getenv("CONTEXT_SELF_VERIFICATION_KEY", "").strip()
+authorization_config = AuthorizationConfig(
+    user_isolation=True,
+    verification_keys=[_self_verification_key] if _self_verification_key else None,
+    algorithm="RS256",
+)
 
 agent_os = AgentOS(
     tracing=True,

@@ -36,14 +36,17 @@ Local dev runs without JWT, so any client on this machine that reaches `http://l
 From the repo root, with the stack up:
 
 ```sh
-python scripts/connect.py            # add @context to every MCP client found
+python scripts/connect.py            # add @context (local) to every MCP client found
+python scripts/connect.py --production  # add the deployed instance (URL + JWT from .env.production)
 python scripts/connect.py --dry-run  # preview, write nothing
 python scripts/connect.py --remove   # undo
 ```
 
 It detects Claude Code, Codex, and the Claude Desktop app and wires @context into each — running `claude mcp add` / `codex mcp add` for the CLIs and writing an `mcp-remote` bridge into `claude_desktop_config.json` for the desktop app (absolute `npx` path resolved, existing keys preserved, a timestamped backup made, anything already configured skipped). Pure stdlib, so no venv needed. Useful flags: `--clients claude-code codex claude-desktop` to limit the set, `--url` for a non-default endpoint, `--config-path` to point at a non-standard desktop config.
 
-The per-client sections below are what it automates — reach for them to do it by hand, or for a deployed / HTTPS instance (which still needs the auth header set manually).
+**`--production`** targets your deployed instance: it reads `AGENTOS_URL` from `.env.production`, derives `https://<your-domain>/mcp`, and threads `Authorization: Bearer <JWT>` into every client for you. The JWT is read from `CONTEXT_MCP_JWT` in `.env.production`, else `--token <JWT>`, else you're prompted — and you **self-issue** that token rather than copying one from os.agno.com (see [Self-issued production token](#self-issued-production-token) below). Claude Code gets the token via `--header`; Codex via `--bearer-token-env-var CONTEXT_JWT` (so it stays out of Codex's config — `export CONTEXT_JWT=<JWT>` in your shell); Claude Desktop via the bridge's `--header`. Switching a client from local to prod? CLI clients match by name, so re-run with `--force`. The full setup — minting the token, what lands where — is in [Self-issued production token](#self-issued-production-token) below; the [README](../README.md#connect-production-context-mcp-server) has the one-command quick-start.
+
+The per-client sections below are what it automates — reach for them to do it by hand, or to understand exactly what each form writes.
 
 ## Claude Code (CLI)
 
@@ -110,7 +113,7 @@ Cloud clients — ChatGPT on the web, Claude on the web — run on a remote serv
 **Deploy it (recommended).** Deploy `@context` (the Railway steps in the [README](../README.md)) and you get a public domain; the endpoint is `https://<your-domain>/mcp`. Production (`RUNTIME_ENV=prd`) turns JWT on, so the server is properly owner-gated. Add the connector with:
 
 - **URL**: `https://<your-domain>/mcp`
-- **Auth header**: `Authorization: Bearer <JWT>` — the token os.agno.com mints for your AgentOS (the same one the REST API uses).
+- **Auth header**: `Authorization: Bearer <JWT>` — a token you self-issue (see [Self-issued production token](#self-issued-production-token) below); the `CONTEXT_MCP_JWT` value `scripts/mint_mcp_jwt.py` produces.
 - Set `AGENTOS_URL` to your domain so the server accepts that Host (DNS-rebinding allowlist — see below).
 
 **Tunnel for a quick test (ngrok).**
@@ -124,6 +127,33 @@ ngrok http 8000
 > ⚠️ A tunnel to a **dev** instance has no JWT, so the owner gate falls back to "you" for *anyone who has the URL* — an open door to your context. Only tunnel a `RUNTIME_ENV=prd` run (real JWT), or keep it ephemeral and shut it down right after.
 
 **ChatGPT note.** ChatGPT reaches remote MCP servers through **Connectors** and the **Responses API** — both public-HTTPS only. The Responses API `mcp` tool is the smoothest path for a static-token server: pass `server_url` plus `headers: {Authorization: "Bearer <JWT>"}`. The consumer connector UI leans on OAuth and tier-gates some features, so the API path is the easier one today. (Documented from the API contract — not live-tested here.)
+
+## Self-issued production token
+
+The deployed server is JWT-gated, so every client needs a bearer token. You **self-issue** it rather than copying one from os.agno.com — which means the whole flow is scriptable and the token is durable (a config-file token you set once, not a short-lived browser session token).
+
+**Why self-issue.** AgentOS verifies a JWT against any public key it's configured to trust, and [`verification_keys` is a list](https://docs.agno.com/agent-os/security/authorization/self-hosted) — it tries each until one matches. The deployed app trusts **two** keys: the os.agno.com control-plane key (`JWT_VERIFICATION_KEY`, appended automatically by AgentOS, so the [AgentOS UI](../README.md#agentos-ui) keeps working) **and** a key you own (`CONTEXT_SELF_VERIFICATION_KEY`, wired in [`app/main.py`](../app/main.py)). Both issuers work at once. os.agno.com holds the private half of *its* key, so it mints the UI's tokens; you hold the private half of *yours*, so you mint your own MCP token.
+
+**Mint it.** [`scripts/mint_mcp_jwt.py`](../scripts/mint_mcp_jwt.py) (run in the venv — it needs `pyjwt` + `cryptography`):
+
+```sh
+python scripts/mint_mcp_jwt.py --write   # keypair (once) + signed admin token → .env.production
+```
+
+- Generates an RS256 keypair on first run. The **private** signing key lives in `secrets/` (gitignored, `chmod 600`) and never leaves your machine — the server only gets the public half.
+- Writes `CONTEXT_SELF_VERIFICATION_KEY` (public key) and `CONTEXT_MCP_JWT` (a signed token: `sub` = your `OWNER_ID`, `scopes: ["agent_os:admin"]`, one-year expiry) to `.env.production`.
+- `--rotate-key` regenerates the keypair (invalidates tokens minted with the old one); `--ttl-days N` and `--sub <id>` override the defaults.
+
+**Then push + wire** (or run all three at once with [`scripts/setup_production_mcp.sh`](../scripts/setup_production_mcp.sh)):
+
+```sh
+./scripts/railway/env-sync.sh           # push CONTEXT_SELF_VERIFICATION_KEY (the public key) to the deploy
+python scripts/connect.py --production   # thread CONTEXT_MCP_JWT into your MCP clients
+```
+
+`env-sync.sh` pushes the public key but **skips `CONTEXT_MCP_JWT`** — the signing-grade token stays on your machine (read only by `connect.py`), never on the internet-facing box. The token starts verifying once Railway finishes redeploying with the new public key.
+
+> Prefer not to run your own issuer? You can instead reuse an os.agno.com control-plane token — copy the `Authorization: Bearer …` value the UI sends (browser DevTools → Network → any request to your domain) and pass it as `--token`. It works, but those tokens expire, so it's better for a quick test than a token you paste into a client config.
 
 ## How it's secured
 

@@ -92,7 +92,7 @@ Add @context to every MCP client on your machine with one command:
 python scripts/connect.py
 ```
 
-The script finds Claude Code, Codex, and the Claude Desktop app, and registers @context with each. Use `--dry-run` to preview and `--remove` to undo.
+The script finds Claude Code, Codex, and the Claude Desktop app, and registers @context with each. Use `--dry-run` to preview and `--remove` to undo. Once you've deployed, the same script points your clients at the live instance — see [Connect production @context MCP server](#connect-production-context-mcp-server).
 
 ### Add @context to MCP clients manually
 
@@ -240,6 +240,25 @@ Repoint the `/slack/events` and `/slack/interactions` request URLs to your Railw
 
 See [`docs/SLACK.md`](docs/SLACK.md#moving-from-local-to-production) for full steps.
 
+## Connect production @context MCP server
+
+Once @context is deployed (you have a Railway domain), point your MCP clients at the production endpoint instead of localhost. The deployed server is JWT-gated, so this needs a bearer token. For the MCP server, we mint our own token and push it to Railway. This is scripted end to end:
+
+```sh
+source .venv/bin/activate          # mint needs pyjwt + cryptography (in requirements)
+./scripts/setup_production_mcp.sh   # mint token → push public key → wire MCP clients
+```
+
+`setup_production_mcp.sh` runs three steps. Re-run it any time to rotate the token:
+
+1. [`scripts/mint_mcp_jwt.py`](scripts/mint_mcp_jwt.py) — self-issues an RS256 keypair (private key stays local in gitignored `secrets/`) and writes the public key + a signed admin token to `.env.production`.
+2. [`scripts/railway/env-sync.sh`](scripts/railway/env-sync.sh) — pushes the **public** key to Railway so the deploy trusts your token (the token itself stays off the server).
+3. [`scripts/connect.py --production`](scripts/connect.py) — threads the token into Claude Code, Codex, and Claude Desktop.
+
+You self-issue the token instead of copying one from os.agno.com, and @context trusts your key *alongside* the os.agno.com one — so the [AgentOS UI](#agentos-ui) keeps working too.
+
+See [`docs/MCP.md`](docs/MCP.md#self-issued-production-token) for the full details: where the token comes from, per-client specifics (Codex's `$CONTEXT_JWT`, switching local→prod), ChatGPT/Claude web, and how it's secured.
+
 ## Connect @context knowledge base to Git
 
 When testing locally we can use the local `knowledge/` folder to store the knowledge base. But in production we need to back the knowledge base with a durable solution like a Git repo.
@@ -334,6 +353,8 @@ python -m evals --case <name>  # one case
 | `OWNER_NAME` | no | canonical `OWNER_ID` | Display name rendered into the prompt. Cosmetic, never matched as an identity. |
 | `RUNTIME_ENV` | no | `prd` | `dev` enables hot-reload and disables JWT. Compose sets this to `dev` for local. |
 | `JWT_VERIFICATION_KEY` | prd | none | Public key from os.agno.com. Required when `RUNTIME_ENV=prd`. |
+| `CONTEXT_SELF_VERIFICATION_KEY` | no | none | A second JWT public key the app *also* trusts, alongside the os.agno.com key — your own, so tokens you self-issue with `scripts/mint_mcp_jwt.py` verify (the os.agno.com UI keeps working). Written by that script; pushed to the server by `env-sync.sh`. See [Connect production @context MCP server](#connect-production-context-mcp-server). |
+| `CONTEXT_MCP_JWT` | no | none | The self-issued bearer token `scripts/connect.py --production` threads into your MCP clients. Client-side only (lives in `.env.production`, never pushed to the server). Minted by `scripts/mint_mcp_jwt.py`. |
 | `AGENTOS_URL` | no | `http://127.0.0.1:8000` | Scheduler base URL. Also anchors the MCP server's Host allowlist — set it to your Railway/ngrok domain so the deployed or tunnelled `/mcp` endpoint accepts that Host (see [`docs/MCP.md`](docs/MCP.md)). |
 | `INTERNAL_SERVICE_TOKEN` | no | auto-generated | Scheduler-to-OS auth token. Set it when running more than one replica behind one URL — see [`docs/SCALING.md`](docs/SCALING.md). |
 | `PARALLEL_API_KEY` | no | none | Switches the `web` source from keyless Parallel MCP to the authenticated SDK (higher rate ceiling). |

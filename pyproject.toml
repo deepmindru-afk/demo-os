@@ -46,7 +46,7 @@ plugins = ["pydantic.mypy"]
 exclude = [".venv*"]
 
 [[tool.mypy.overrides]]
-module = ["agno.*", "httpx.*", "mcp.*", "sqlalchemy.*", "fastapi.*"]
+module = ["agno.*", "httpx.*", "mcp.*", "sqlalchemy.*", "fastapi.*", "googleapiclient.*"]
 ignore_missing_imports = true
 
 [tool.uv.pip]
