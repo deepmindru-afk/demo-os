@@ -19,7 +19,7 @@ dependencies = [
   "google-auth-oauthlib",
   "mcp",
   "openai",
-  "parallel-web==0.6.0",
+  "parallel-web",
   "pgvector",
   "psycopg[binary]",
   "sqlalchemy",
