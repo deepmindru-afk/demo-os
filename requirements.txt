@@ -62,7 +62,7 @@ opentelemetry-instrumentation==0.63b1
 opentelemetry-sdk==1.42.1
 opentelemetry-semantic-conventions==0.63b1
 packaging==26.2
-parallel-web==1.1.0
+parallel-web==0.6.0
 pgvector==0.4.2
 propcache==0.5.2
 proto-plus==1.28.0
