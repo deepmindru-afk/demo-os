@@ -230,15 +230,21 @@ Or enable auto-deploy in the Railway dashboard:
 2. Navigate to the agent-os service
 3. Click **Settings**
 4. Click **Source** and select the git repo for this project
-5. Set the deploy branch to `main` and click **Save (or Deploy)**
+5. Set the deploy branch to `main` and click **Deploy**
 
 ### 6. Point Slack at production
 
-If you set Slack up locally, your Slack app's request URLs still point at your ngrok tunnel - i.e. your laptop - so events never reach the deployed instance.
+If you set Slack up locally, your Slack app's request URLs still point at your local @context via the ngrok tunnel.
 
-Repoint the `/slack/events` and `/slack/interactions` request URLs to your Railway domain. AgentOS must already be deployed and serving (JWT key in place) so Slack's URL re-verification passes.
+Repoint the `/slack/events` and `/slack/interactions` request URLs to your Railway domain. AgentOS must already be deployed and serving traffic so Slack's URL re-verification passes.
 
 See [`docs/SLACK.md`](docs/SLACK.md#moving-from-local-to-production) for full steps.
+
+## Connect Gmail and Calendar
+
+You can connect your Gmail and Calendar to @context to ground the rundown and meeting prep in your real inbox and calendar.
+
+See [`docs/GOOGLE.md`](docs/GOOGLE.md) for more details.
 
 ## Understanding the codebase
 
@@ -276,25 +282,19 @@ Here are the runtime skills that are included in the repo:
 - [`skills/research/SKILL.md`](skills/research/SKILL.md).
 - [`skills/knowledge-review/SKILL.md`](skills/knowledge-review/SKILL.md).
 
-## Connect Gmail and Calendar
-
-With your Gmail connected, `query_gmail` / `query_calendar` ground the rundown and meeting prep in your real inbox and calendar. `update_gmail` writes the follow-up **as a draft in your Gmail** — you review, edit, and send it yourself; it never sends on its own. `update_calendar` proposes events and changes, which land in your approvals queue (the approvals page in the AgentOS UI) for you to confirm.
-
-So reading and prep are frictionless, and the one outward step stays yours. [`docs/GOOGLE.md`](docs/GOOGLE.md) is the few-minute setup (and how to keep the tokens from expiring).
-
 ## Evals
 
-The eval suite ([`evals/`](evals/)) is the regression net, and it's built around the one claim that matters: *anyone can write, only you can read.* A deterministic gate proves - with no model in the loop - that a guest's resolved toolset is exactly `submit_update`; adversarial guest cases confirm it refuses to read or leak owner data (even under a prompt-injection that tells it to act as you), and owner cases confirm it actually captures, retrieves, and admits what it can't find. Tool-call and trace-level checks are the spine; an LLM judge corroborates.
+@context comes with an eval suite ([`evals/`](evals/)) for regression testing. It's tests the claim that: *anyone can write, only you can read.*
+
+Run it:
 
 ```sh
-python -m evals                # run the suite
+python -m evals                # run the full suite
 python -m evals -v             # stream the full agent run
 python -m evals --case <name>  # one case
 ```
 
 ## Environment variables
-
-`compose.yaml` sets the dev defaults (`RUNTIME_ENV=dev`, `AGNO_DEBUG=True`, `WAIT_FOR_DB=True`, a local `OWNER_ID` + `OWNER_NAME`), so local Docker runs hot-reload, skip JWT, and treat you as the owner. Production reads from `.env.production` via `./scripts/railway/env-sync.sh`.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
