@@ -104,7 +104,7 @@ cp example.env .env
 docker compose up -d --build
 ```
 
-Hot-reload watches `agents/`, `app/`, `db/`, and `skills/`. Edits land in <2s. `compose.yaml` sets `RUNTIME_ENV=dev`, `AGNO_DEBUG=True`, and `WAIT_FOR_DB=True` — so JWT is off and the API blocks on the DB before serving.
+Hot-reload watches `agents/`, `app/`, `db/`, `skills/`, and `workflows/`. Edits land in <2s. `compose.yaml` sets `RUNTIME_ENV=dev`, `AGNO_DEBUG=True`, and `WAIT_FOR_DB=True` — so JWT is off and the API blocks on the DB before serving.
 
 The intended path is to set `OWNER_ID` to your email (the one you sign in to os.agno.com with) in `.env`; the AgentOS UI then sends it as your verified identity and you get the owner surface. If you don't set one, compose falls back to a placeholder `OWNER_ID` of `owner@example.com` (with a cosmetic `OWNER_NAME=Me`) so the dev UI path works out of the box; a `.env` `OWNER_ID` overrides it entirely. Any other `user_id` — including the `anon` sentinel agno assigns an unauthenticated local caller — exercises the guest (capture-only) path.
 

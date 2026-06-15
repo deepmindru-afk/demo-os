@@ -31,27 +31,34 @@ _WEEKLY_PROMPT = (
 )
 
 
-def _run_playbook(prompt: str) -> str:
-    """Invoke the context agent on `prompt` as the owner, read-only, return its text."""
+async def _run_playbook(prompt: str) -> str:
+    """Invoke the context agent on `prompt` as the owner, read-only, return its text.
+
+    Async because the context agent's provider tools are async (e.g. `query_web`,
+    the time-boxed query_* wrappers): agno's sync `agent.run()` refuses async tools,
+    so the playbook must go through `arun`. The scheduler triggers the digest
+    workflow via `workflow.arun()` (see app/schedules.py and the OS workflows
+    router), which runs async step executors — so this awaits cleanly.
+    """
     # Imported lazily: agents.context imports across the package, so deferring the
     # import keeps this module cheap to load and avoids any import-order surprise.
     from agents.context import READ_ONLY_FLAG, context
 
     # READ_ONLY_FLAG strips every write tool for this run (see context_tools), so the
     # playbook can read but can't post the brief itself or touch the calendar.
-    result = context.run(input=prompt, user_id=CANONICAL_OWNER_ID, metadata={READ_ONLY_FLAG: True})
+    result = await context.arun(input=prompt, user_id=CANONICAL_OWNER_ID, metadata={READ_ONLY_FLAG: True})
     content = getattr(result, "content", None)
     return str(content).strip() if content else ""
 
 
-def _run_digest(prompt: str, label: str, run_context: RunContext) -> StepOutput:
+async def _run_digest(prompt: str, label: str, run_context: RunContext) -> StepOutput:
     """Shared core: gate, run the playbook as owner, deliver the result, report."""
     if not is_owner(run_context):
         return StepOutput(content=f"The {label} digest is only available to the owner.")
     if CANONICAL_OWNER_ID is None:
         return StepOutput(content=f"No owner configured, so there's no one to send the {label} digest to.")
 
-    brief = _run_playbook(prompt)
+    brief = await _run_playbook(prompt)
     if not brief:
         return StepOutput(content=f"The {label} digest produced no content; nothing sent.")
 
@@ -68,14 +75,14 @@ def _run_digest(prompt: str, label: str, run_context: RunContext) -> StepOutput:
     return StepOutput(content=f"{label.capitalize()} digest {status}.")
 
 
-def daily_digest_step(step_input: StepInput, run_context: RunContext) -> StepOutput:
+async def daily_digest_step(step_input: StepInput, run_context: RunContext) -> StepOutput:
     """The daily rundown, delivered to the owner's Slack DM. Run by the schedule."""
-    return _run_digest(_DAILY_PROMPT, "daily", run_context)
+    return await _run_digest(_DAILY_PROMPT, "daily", run_context)
 
 
-def weekly_digest_step(step_input: StepInput, run_context: RunContext) -> StepOutput:
+async def weekly_digest_step(step_input: StepInput, run_context: RunContext) -> StepOutput:
     """The weekly plan, delivered to the owner's Slack DM. Run by the schedule."""
-    return _run_digest(_WEEKLY_PROMPT, "weekly", run_context)
+    return await _run_digest(_WEEKLY_PROMPT, "weekly", run_context)
 
 
 # The scheduled digests: the owner's read-only playbooks (daily rundown, weekly
