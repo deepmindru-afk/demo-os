@@ -103,12 +103,9 @@ async def ask_context(message: str, user_id: str | None = None, session_id: str 
     # Key under the canonical id — matches normalize_identity and keeps sessions /
     # storage from fragmenting across the owner's identities.
     #
-    # Hard ceiling on the whole run: a cross-source sweep chains several gpt-5.5
-    # sub-agents, and with no bound a slow one leaves the MCP client hanging on an
-    # open stream (pings, no result) until the client itself times out. Bounding it
-    # here turns "infinite hang" into a clean, actionable reply. Other exceptions are
-    # left to propagate — FastMCP serializes them into a proper `isError` result, so
-    # the client still gets a terminated stream, never a dead one.
+    # Hard ceiling on the whole run: without a bound, a slow cross-source sweep leaves
+    # the MCP client hanging on an open stream until it times out itself. Other errors
+    # propagate — AgentOS/FastMCP serializes them into a proper `isError` result.
     try:
         result = await asyncio.wait_for(
             context.arun(input=message, user_id=CANONICAL_OWNER_ID, session_id=session_id),

@@ -355,17 +355,24 @@ async def _bounded_tool_call(make_call, timeout: float, label: str):
             await task
 
 
-def _timeout_query_tool(original, timeout: float):
+def _time_boxed_query_tool(original, timeout: float, precheck=None):
     """Wrap a provider ``query_*`` tool so its sub-agent run is time-boxed.
 
     Same name + description; the explicit ``question`` / ``run_context`` signature keeps
-    agno's schema inference and run_context injection unchanged.
+    agno's schema inference and run_context injection unchanged. The optional ``precheck``
+    (an async callable) runs first: if it returns a chunk, we yield that and skip the
+    sub-agent — the Google guard uses it to short-circuit on a dead token.
     """
     raw = original.entrypoint
     label = original.name
 
     @tool(name=original.name, description=original.description)
     async def _query(question: str, run_context: RunContext | None = None):
+        if precheck is not None:
+            skip = await precheck()
+            if skip is not None:
+                yield skip
+                return
         async for chunk in _bounded_tool_call(lambda: raw(question=question, run_context=run_context), timeout, label):
             yield chunk
 
@@ -404,29 +411,25 @@ def _google_token_usable(token_path: str) -> bool:
     return False
 
 
-def _guarded_google_query_tool(original, provider_id: str, timeout: float):
-    """Time-boxed ``query_gmail`` / ``query_calendar`` that skips on a dead token.
+def _google_token_precheck(provider_id: str):
+    """Build a precheck for `_time_boxed_query_tool` that skips Google reads on a dead token.
 
-    The token check runs off the loop and is itself bounded, so a hung refresh can't
-    stall the run either.
+    Returns an async callable that yields ``None`` when the token is usable, or a one-line
+    "skipped" chunk to short-circuit before the sub-agent spins up. The token check runs
+    off the loop and is itself bounded, so a hung refresh can't stall the run either.
     """
-    raw = original.entrypoint
-    label = original.name
     token_path = gmail_token_path() if provider_id == "gmail" else calendar_token_path()
 
-    @tool(name=original.name, description=original.description)
-    async def _query(question: str, run_context: RunContext | None = None):
+    async def _precheck():
         try:
             usable = await asyncio.wait_for(asyncio.to_thread(_google_token_usable, token_path), timeout=8)
         except Exception:
             usable = False
-        if not usable:
-            yield json.dumps({"error": f"{provider_id} is unavailable right now (auth needs refresh) — skipped"})
-            return
-        async for chunk in _bounded_tool_call(lambda: raw(question=question, run_context=run_context), timeout, label):
-            yield chunk
+        if usable:
+            return None
+        return json.dumps({"error": f"{provider_id} is unavailable right now (auth needs refresh) — skipped"})
 
-    return _query
+    return _precheck
 
 
 def owner_provider_tools() -> list:
@@ -443,10 +446,9 @@ def owner_provider_tools() -> list:
             name = getattr(t, "name", "") or ""
             if not name.startswith("query_"):
                 tools.append(t)
-            elif ctx.id in ("gmail", "calendar"):
-                tools.append(_guarded_google_query_tool(t, ctx.id, timeout))
-            else:
-                tools.append(_timeout_query_tool(t, timeout))
+                continue
+            precheck = _google_token_precheck(ctx.id) if ctx.id in ("gmail", "calendar") else None
+            tools.append(_time_boxed_query_tool(t, timeout, precheck))
     return tools
 
 
