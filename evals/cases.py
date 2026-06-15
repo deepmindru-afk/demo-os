@@ -133,8 +133,9 @@ def assert_boundary_is_structural() -> tuple[bool, str]:
 def assert_mcp_channel_is_owner_only() -> tuple[bool, str]:
     """Deterministic proof the owner-only MCP channel is fail-closed.
 
-    The MCP channel (`ask_context`) is the owner's private read/act surface over
-    MCP. Its gate (`OwnerOnlyMiddleware`) must accept the owner and reject
+    The MCP channel (`ask_context` / `update_context`) is the owner's private
+    read/act/file surface over MCP — both tools share one gate
+    (`OwnerOnlyMiddleware`), which must accept the owner and reject
     everyone else with 401 — never fall back to the guest surface. We check the
     gate's decision function directly (`_caller_is_owner`, what the middleware
     401s on): the owner is accepted and resolves to the *owner* toolset; a guest,
