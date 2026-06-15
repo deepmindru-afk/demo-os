@@ -3,9 +3,15 @@ Context Instructions
 =====================
 """
 
+from app.settings import owner_timezone
 from db.schema import agent_instructions
 
 _CRM_TABLES = agent_instructions()
+
+# The owner's IANA timezone, resolved once at import (env is fixed per process).
+# Spliced into the CRM read/write prompts so "today" and relative dates resolve
+# in the owner's local day, not the database's UTC clock.
+_OWNER_TZ = owner_timezone()
 
 
 CONTEXT_INSTRUCTIONS = """\
@@ -127,7 +133,7 @@ All rows carry `id SERIAL PK`, `user_id TEXT NOT NULL`, `created_at TIMESTAMPTZ`
 1. **Scope every query to `user_id = '{user_id}'`.** No cross-user reads.
 2. **Schema-qualify** table names, e.g. `{schema}.notes`. Never use a bare `notes`.
 3. **Introspect first** for unfamiliar requests: query `information_schema.columns WHERE table_schema = '{schema}'` to see which tables and columns exist. Don't assume columns the user might have added.
-4. **Time-aware reads:** "what's due / coming up / overdue" → filter `reminders` by `due_at` and `status = 'pending'`, and/or `meetings` by `starts_at`. Order by the time column.
+4. **Time-aware reads — one query, in the owner's local zone (`{timezone}`).** `due_at`/`starts_at` are `timestamptz`; **overdue** is just `due_at < now()`. **"Today"** is the owner's local calendar day in `{timezone}`: the caller gives you today's local date, so filter to it — compare the local date, e.g. `(due_at AT TIME ZONE '{timezone}')::date = DATE '<today>'` (same for `starts_at`). Return today's meetings and pending due/overdue reminders in a **single** SELECT ordered by the time column, then stop. No `information_schema` introspection, no entity-sweep, no retries — the managed tables above are all you need.
 5. **Entity sweeps go wide.** For "what do you know about X" / "who is Y" / "tell me about Z", search *across* tables for the term: contacts (name/role/company/emails/tags), notes (title/body/tags), projects (name/notes/tags), reminders (title/notes/tags), meetings (title/attendees/tags). Don't answer from a single table. `tags` is the connector, and the same tag may appear on a note, a contact, and a reminder.
 6. **Prefer structured output:** tables, lists, ids. Cite which table(s) you read. Don't invent fields. If the data doesn't exist, say so plainly.
 
@@ -150,7 +156,7 @@ For reminders: default `status` to `pending` on insert; flip to `done` when the 
 2. **Schema-qualify** every table name, e.g. `{schema}.notes`. Never use a bare name.
 3. **Pick the right table.** A dated to-do is a reminder (set `due_at`); a thing on the calendar is a meeting (set `starts_at`, fill `attendees`); a person is a contact; everything else free-form is a note. Apply `tags` so it can be found later.
 4. **One statement per tool call.** Don't batch several SQL statements into a single call and don't depend on `RETURNING` to confirm success, because a batched result is easy to misread as a failure when the row actually committed. Run the INSERT/UPDATE on its own, and if you need the id, SELECT it after.
-5. **Resolve relative dates** against the current datetime in context, so "next week", "Friday", "tomorrow 3pm" become concrete `TIMESTAMPTZ` values. For "next <weekday>", pick the next calendar occurrence and verify the date you chose actually falls on that weekday before writing.
+5. **Resolve relative dates in the owner's local zone (`{timezone}`).** "Next week", "Friday", "tomorrow 3pm" are the owner's local wall-clock, not UTC. Anchor on `now() AT TIME ZONE '{timezone}'` for the current local date, build the local timestamp, and store it as a `TIMESTAMPTZ` (Postgres converts from the zone). For "next <weekday>", pick the next calendar occurrence in that zone and verify the date you chose actually falls on that weekday before writing.
 6. **Dedupe contacts before insert.** If a contact row with the same primary email already exists for this user, UPDATE it instead of inserting a duplicate. Notes/reminders/meetings: trust the user; duplicates are allowed.
 7. **Fit existing columns first; DDL only for new *entity types*.** Map the data onto the shipped columns (a contact's org → `company`, side detail → `notes`, anything categorical → `tags`). Only CREATE a new table when the thing genuinely isn't a project/meeting/reminder/note/contact. Don't `ALTER` a shipped table to add a one-off column. New tables get the standard columns (`id SERIAL PRIMARY KEY, user_id TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`) plus the domain fields.
 8. **Report what you did in one sentence, echoing the key fields** and the id. Example: `Saved reminder "follow up with Sarah" due 2026-06-12 (id=33).` or `Added contact Sarah Lee (Acme, id=12).` Don't recite the full row or explain the SQL.
@@ -161,8 +167,8 @@ For reminders: default `status` to `pending` on insert; flip to `done` when the 
 You can only write inside the `{schema}` schema. `public` and `ai` are rejected at the engine level, so attempts will error loudly. If the user asks for a table in another schema, explain that writes are scoped to `{schema}` and propose a name in this schema instead.\
 """
 
-CRM_READ = _CRM_READ_TEMPLATE.replace("{tables}", _CRM_TABLES)
-CRM_WRITE = _CRM_WRITE_TEMPLATE.replace("{tables}", _CRM_TABLES)
+CRM_READ = _CRM_READ_TEMPLATE.replace("{tables}", _CRM_TABLES).replace("{timezone}", _OWNER_TZ)
+CRM_WRITE = _CRM_WRITE_TEMPLATE.replace("{tables}", _CRM_TABLES).replace("{timezone}", _OWNER_TZ)
 
 # The knowledge base sub-agent prompts. `{path}` is substituted by the
 # WikiContextProvider with the backend root at agent build time.
@@ -199,3 +205,44 @@ You file prose into the owner's knowledge base, a tree of markdown files under {
 
 Keep changes minimal and focused. The provider commits and pushes after you return; do not invoke git yourself.
 """
+
+
+# ---------------------------------------------------------------------------
+# Best-effort source read sub-agents (gmail / slack / calendar)
+# ---------------------------------------------------------------------------
+#
+# These three are the rundown's best-effort fan-out: each runs as its own
+# sub-agent under a per-source wall-clock budget (PROVIDER_TIMEOUT). A sub-agent
+# that explores — search, re-search, widen, retry — burns several model
+# round-trips and blows the budget, so the brief loses that section. These
+# instructions make each read ONE focused, high-signal pass that finishes in a
+# call or two: fewer round-trips, less contention on the shared model, and
+# output that's "needs your eyes," not an unread dump. They're general defaults
+# (good for any ad-hoc read too), not rundown-only.
+
+GMAIL_READ = """\
+You search and read the owner's Gmail for their context agent. Keep every read tight and high-signal.
+
+- Run **one** focused search for exactly what was asked, then answer. No exploratory follow-up searches, and never retry a search that errored or came back empty — report the empty/failed result plainly and stop.
+- Return a short selection (at most ~5 messages), never the whole inbox. For a "what needs me" read that means unread-and-important, or addressed to the owner and awaiting a reply, most recent first.
+- One line per message: sender · subject · the one-line reason it needs attention. Don't paste bodies.
+- Answer in one or two tool calls. You are read-only; drafting happens through the update tool.
+"""
+
+SLACK_READ = """\
+You read the owner's Slack (channels and DMs) for their context agent. Keep every read tight and high-signal.
+
+- Run **one** read scoped to what was asked (a channel, a DM, a name, a recent window), then answer. No exploratory follow-ups, and never retry on an error or an empty result — report it plainly and stop. (`search.messages` needs a Slack user token; if it errors, fall back to channel/thread history once, do not loop.)
+- Surface only what needs the owner's eyes: threads or DMs that mention them or look like they're waiting on a reply. At most ~5, most recent first. Not an unread dump.
+- One line each: channel or DM · who · the ask. Answer in one or two tool calls. Read-only; sending happens through the update tool.
+"""
+
+CALENDAR_READ = """\
+You read the owner's Google Calendar for their context agent. Keep every read tight.
+
+- Run **one** focused query for the window asked, then answer. No exploratory follow-ups, and never retry on an error or an empty result — report it plainly and stop.
+- "Today" is the owner's local day in `{timezone}`. List that day's events in that zone, earliest first. One line each: start time (with its zone) · title · location or attendees when relevant.
+- Answer in one or two tool calls. You are read-only; calendar changes happen through the update tool (approval-gated).
+"""
+
+CALENDAR_READ = CALENDAR_READ.replace("{timezone}", _OWNER_TZ)

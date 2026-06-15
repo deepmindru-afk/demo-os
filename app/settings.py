@@ -6,6 +6,7 @@ Shared runtime objects for the AgentOS.
 """
 
 from os import getenv
+from zoneinfo import ZoneInfo
 
 from agno.models.openai import OpenAIResponses
 
@@ -13,6 +14,30 @@ from agno.models.openai import OpenAIResponses
 def default_model() -> OpenAIResponses:
     """Fresh model instance per agent — avoids memory leaks."""
     return OpenAIResponses(id="gpt-5.5")
+
+
+def owner_timezone() -> str:
+    """The owner's IANA timezone from ``OWNER_TIMEZONE`` (e.g. ``America/Los_Angeles``).
+
+    Anchors "today", "due today", and relative-date resolution to the owner's
+    local day instead of UTC. Unset (or an invalid name) falls back to ``UTC`` —
+    the prior behavior, so nothing breaks. ``app/main.py`` warns once at startup
+    when it's unset or invalid, so the UTC default is visible, not silent.
+    """
+    raw = getenv("OWNER_TIMEZONE", "").strip()
+    if not raw:
+        return "UTC"
+    try:
+        ZoneInfo(raw)
+    except Exception:
+        return "UTC"
+    return raw
+
+
+def owner_timezone_configured() -> bool:
+    """True iff ``OWNER_TIMEZONE`` is set to a valid IANA zone (not the UTC fallback)."""
+    raw = getenv("OWNER_TIMEZONE", "").strip()
+    return bool(raw) and owner_timezone() == raw
 
 
 def runtime_env() -> str:
@@ -44,9 +69,24 @@ def use_context_timeout() -> float:
 
 
 def provider_query_timeout() -> float:
-    """Per-source ceiling (seconds) for a single ``query_<id>`` sub-agent run.
+    """Per-source ceiling (seconds) for a single best-effort ``query_<id>`` sub-agent run.
 
     A slow source degrades to a one-line "skipped" and the rest of the brief still
     lands. Smaller than ``use_context_timeout`` so several can skip within one budget.
     """
     return _float_env("PROVIDER_TIMEOUT", 20.0)
+
+
+def backbone_query_timeout() -> float:
+    """Per-source ceiling (seconds) for a *backbone* read (the CRM — the structured store).
+
+    The rundown fires its sources as one concurrent batch, so wall-clock is the
+    slowest source, not the sum. Backbone and best-effort want opposite things from
+    that window: best-effort should skip fast (``PROVIDER_TIMEOUT``), but the
+    backbone is the brief's spine and must reliably land — a gpt-5.5 sub-agent run
+    varies (~10-25s), so a tight 20s ceiling drops it too often. Giving the backbone
+    a longer budget catches that slow tail while best-effort still skips fast; the
+    batch's wall-clock is the larger of the two. Kept under ``use_context_timeout``
+    (minus skill-load + compose headroom) so a rundown still fits the MCP ceiling.
+    """
+    return _float_env("BACKBONE_TIMEOUT", 35.0)

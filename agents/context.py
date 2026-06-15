@@ -16,7 +16,7 @@ from agents.instructions import CONTEXT_INSTRUCTIONS, GUEST_GUIDE, OWNER_GUIDE
 from agents.policy import enforce_capture_only, normalize_identity
 from agents.sources import ACT_TOOLS, context_providers_summary, list_contexts, owner_provider_tools
 from app.identity import ANON_USER_ID, is_owner, owner_display_name
-from app.settings import default_model
+from app.settings import default_model, owner_timezone
 from db import get_postgres_db
 from workflows.reminders import queue_reminders
 
@@ -152,7 +152,13 @@ context = Agent(
         user_profile=UserProfileConfig(mode=LearningMode.AGENTIC),
         user_memory=UserMemoryConfig(mode=LearningMode.AGENTIC),
     ),
+    # Anchor "now" to the owner's local day, not the server's UTC. The rundown's
+    # "today", overdue/due math, and relative-date resolution all key off this.
+    # `OWNER_TIMEZONE` unset → "UTC" (prior behavior); the format carries the
+    # weekday + zone label so the model can frame and render times with a zone.
     add_datetime_to_context=True,
+    timezone_identifier=owner_timezone(),
+    datetime_format="%A %Y-%m-%d %H:%M %Z",
     add_history_to_context=True,
     read_chat_history=True,
     # The MCP path reuses a session_id, so each call replays this many prior runs;

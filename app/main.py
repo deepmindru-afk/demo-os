@@ -18,7 +18,7 @@ from agents.sources import close_context_providers, setup_context_providers
 from app.identity import owner_configured
 from app.mcp import context_mcp_config
 from app.schedules import register_schedules
-from app.settings import is_prd, runtime_env
+from app.settings import is_prd, owner_timezone, owner_timezone_configured, runtime_env
 from db import create_tables, get_postgres_db
 from workflows import WORKFLOWS
 
@@ -38,6 +38,15 @@ if is_prd() and not owner_configured():
         "OWNER_ID is not set — no caller will be treated as the owner. "
         "Context is capture-only for everyone until OWNER_ID is set."
     )
+
+# Missing OWNER_TIMEZONE check: "today" and relative dates fall back to UTC.
+if not owner_timezone_configured():
+    log_warning(
+        "OWNER_TIMEZONE is not set (or invalid) — 'today', due/overdue math, and relative "
+        "dates use UTC. Set it to your IANA zone (e.g. America/Los_Angeles)."
+    )
+else:
+    log_info(f"OWNER_TIMEZONE={owner_timezone()}")
 
 # ---------------------------------------------------------------------------
 # Interfaces

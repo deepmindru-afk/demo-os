@@ -31,8 +31,16 @@ from agno.tools import tool
 from agno.tools.workspace import DEFAULT_EXCLUDE_PATTERNS
 from agno.utils.log import log_info, log_warning
 
-from agents.instructions import CRM_READ, CRM_WRITE, KNOWLEDGE_READ, KNOWLEDGE_WRITE
-from app.settings import default_model, provider_query_timeout
+from agents.instructions import (
+    CALENDAR_READ,
+    CRM_READ,
+    CRM_WRITE,
+    GMAIL_READ,
+    KNOWLEDGE_READ,
+    KNOWLEDGE_WRITE,
+    SLACK_READ,
+)
+from app.settings import backbone_query_timeout, default_model, provider_query_timeout
 from db import SCHEMA, get_readonly_engine, get_sql_engine
 
 # Workspace root for the always-on filesystem context. Hardcoded to the context repo so @context can answer questions about its own codebase out of the box.
@@ -198,7 +206,7 @@ def _create_slack_provider() -> SlackContextProvider | None:
     """
     if not getenv("SLACK_BOT_TOKEN"):
         return None
-    return SlackContextProvider(model=default_model(), read=True, write=True)
+    return SlackContextProvider(model=default_model(), read=True, write=True, read_instructions=SLACK_READ)
 
 
 def _google_configured() -> bool:
@@ -264,6 +272,7 @@ def _create_gmail_provider() -> ContextProvider | None:
         model=default_model(),
         write=True,
         token_path=gmail_token_path(),
+        read_instructions=GMAIL_READ,
     )
 
 
@@ -277,6 +286,7 @@ def _create_calendar_provider() -> ContextProvider | None:
         model=default_model(),
         write=True,
         token_path=calendar_token_path(),
+        read_instructions=CALENDAR_READ,
     )
 
 
@@ -432,14 +442,23 @@ def _google_token_precheck(provider_id: str):
     return _precheck
 
 
+# Backbone read sources — the brief's spine. They get a longer per-source budget
+# than best-effort sources (see backbone_query_timeout) so they reliably land in the
+# concurrent fan-out, where best-effort sources still skip fast. Just the CRM today;
+# the inbound queue (`rundown`) isn't a query_* sub-agent, so it isn't time-boxed.
+BACKBONE_SOURCES: frozenset[str] = frozenset({"crm"})
+
+
 def owner_provider_tools() -> list:
     """Owner provider tools, hardened against slow/dead sources.
 
     Every read (``query_*``) is time-boxed, and Google reads also skip on a dead token.
-    Writes (``update_*``) pass through untouched — single user actions, not part of the
-    fan-out, and bounding one risks a half-finished write.
+    Backbone reads (the CRM) get a longer budget than best-effort ones so the brief's
+    spine reliably lands. Writes (``update_*``) pass through untouched — single user
+    actions, not part of the fan-out, and bounding one risks a half-finished write.
     """
-    timeout = provider_query_timeout()
+    best_effort = provider_query_timeout()
+    backbone = backbone_query_timeout()
     tools: list = []
     for ctx in get_context_providers():
         for t in ctx.get_tools():
@@ -447,6 +466,7 @@ def owner_provider_tools() -> list:
             if not name.startswith("query_"):
                 tools.append(t)
                 continue
+            timeout = backbone if ctx.id in BACKBONE_SOURCES else best_effort
             precheck = _google_token_precheck(ctx.id) if ctx.id in ("gmail", "calendar") else None
             tools.append(_time_boxed_query_tool(t, timeout, precheck))
     return tools

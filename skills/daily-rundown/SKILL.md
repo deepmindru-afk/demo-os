@@ -20,15 +20,25 @@ needs the owner's eyes today, not a mirror of every inbox and channel.
 
 ## Procedure
 
-**Keep it cheap.** Each source is a sub-agent call; the brief should be a handful
-of them, not a sweep. **One tight retrieval per source, no exploratory follow-ups,
-and never retry a source.** The two local sources below are the backbone and always
-run; the external ones are best-effort and get skipped the moment they're slow or
-unavailable (see the skip rule) — a complete-but-fast brief beats a perfect one that
-hangs.
+**Keep it cheap, and fire it once.** Each source is a sub-agent call under its own
+time budget, and they all share one model — so keep the fan-out small and issue it
+in a **single concurrent batch**: put the backbone and best-effort tool calls in one
+message, all at once, so the brief's wall-clock is the slowest source, not the sum.
+**One tight retrieval per source, no exploratory follow-ups, never retry a source.**
+Don't run the sources in separate turns one after another — that serializes their
+budgets and is the slow path.
 
-1. **Anchor on now.** Use the current datetime in your context; "today" is now →
-   end of the local day.
+The backbone (the two fast local sources below) always runs and carries the brief on
+its own; the best-effort sources get skipped the moment they're slow, error, or come
+back empty (see the skip rule). A complete-but-fast brief beats a perfect one that hangs.
+
+1. **Anchor on now, in the owner's zone.** Read the current datetime from your
+   context — it carries the owner's timezone, with the zone label shown (e.g.
+   `PDT`). "Today" is now → end of *that* local day, and every due/overdue/"today"
+   judgment is made in that zone, not UTC. Render each time with its zone label so
+   nothing is ambiguous. If the owner asks for a different zone ("rundown in GMT"),
+   frame and render the whole brief in that zone instead. Don't auto-detect travel:
+   the configured zone (or the one they ask for) is the source of truth.
 
 **Backbone — always run these two (fast, local):**
 
@@ -37,10 +47,16 @@ hangs.
    sweep filed in once they fell due. (It marks what it shows as briefed — that
    is the point of a morning brief; un-acknowledged items still resurface
    tomorrow.) If it returns nothing, drop the section.
-3. **Calendar + due work — call `query_crm`** (one retrieval, ask for both):
-   - **Meetings** whose `starts_at` is today.
+3. **Calendar + due work — call `query_crm`** (one retrieval, ask for both). Pass
+   today's local date (read it from your context, in the owner's zone) in the
+   question so the CRM doesn't have to derive it:
+   - **Meetings** whose `starts_at` is today (the owner's local day).
    - **Reminders** that are `pending` and due today, plus anything **overdue**
      (`due_at < now`, still pending).
+
+   If this read times out or errors, note "CRM skipped" in the close and move on —
+   do **not** call `query_crm` again. A retry only burns budget and the queue still
+   carries the brief.
 
 **Best-effort add-ons — one call each, only if the source is connected; skip on any trouble:**
 
@@ -68,7 +84,9 @@ the queue copy and don't repeat:
 
 ## Format
 
-Lead in this order, dropping any empty section:
+Lead in this order, dropping any empty section. Render every clock time with its
+zone label (e.g. `9:30 AM PDT`), in the owner's local zone (or the one they asked
+for):
 
 1. **Awaiting you** — the `rundown` items, one line each (who / what).
 2. **Overdue** — past-due pending reminders not already shown above, with how late.
