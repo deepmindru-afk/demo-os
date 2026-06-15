@@ -158,7 +158,7 @@ This auto-managing crm is @context's superpower. Use it to manage projects, meet
 
 @context runs anywhere that runs a Docker container.
 
-The repo includes a script to run on Railway. The `scripts/railway/up.sh` script will run @context as a service with Postgres on the same private network. It reads credentials from `.env.production`, and creates a public domain you connect to in the AgentOS UI.
+For a quick deployment, the repo includes a script to run on Railway. The `scripts/railway/up.sh` script will run @context as a service with Postgres on the same private network. It reads credentials from `.env.production`, and creates a public domain you connect to in the AgentOS UI.
 
 > Requires the [Railway CLI](https://docs.railway.com/cli#installing-the-cli)
 
