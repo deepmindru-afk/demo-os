@@ -1,15 +1,19 @@
 # @context - professional context manager
 
-@context is a self-hosted context manager. It organizes your work context into a private CRM and knowledge base. It plugs into clients like claude, chatGPT, claude code, and codex, and gives them a single source of @context about your work. Connect @context to slack and gmail, and you get a powerful chief of staff with context about everything.
+@context is a self-hosted context manager. It organizes your work context into a private CRM and knowledge base so you can stay on top of things.
+
+It plugs into clients like claude, chatGPT, claude code, and codex, and gives them a source of @context about your work. I use it with claude code to manage product specs.
+
+Connect @context to slack and gmail, and you get a powerful chief of staff with context about everything, available in your favorite AI tools.
 
 > Your AI tools are users of context, not competitors.
 
-@context is designed with privacy and security as a first principle. It runs in two modes:
+@context is built with privacy and security as first principles. It runs in two modes:
 
-1. **Owner mode:** all tools available: capture context (*"met Kyle from Agno, follow up next week"*), retrieve context (*"give me a rundown of my day"*), prepare context (*"process today"*)
-2. **Guest mode:** teammates (*and their agents*) can leave updates in your queue. You get briefed when you ask for a rundown.
+1. **Owner mode.** You get every tool. Capture context (*"met Kyle from Agno, follow up next week"*), retrieve context (*"give me a rundown of my day"*), and prepare context (*"process today"*).
+2. **Guest mode.** Teammates (*and their agents*) can leave updates in your queue. You get briefed when you ask for a rundown.
 
-@context runs on Agno's AgentOS runtime, so user identity is verified on every request and tools are assigned based on the user's role (owner vs guest).
+@context runs on Agno's AgentOS runtime, so user identity is verified on every request, and tools are assigned by role (owner or guest).
 
 > Built on [Agno](https://docs.agno.com).
 
@@ -70,7 +74,7 @@ The main way to use @context is from an MCP client like Claude Code, Codex, Clau
 
 @context comes with an MCP server at `http://localhost:8000/mcp`. I use it with claude code to manage product spects, which another claude code or codex instance can implement. I also use it with desktop apps (Claude, ChatGPT) and web clients (ChatGPT web, Claude web).
 
-> Note: @context's MCP server is always on and **owner-only**.
+> Note: @context's MCP server is **owner-only**, and runs by default.
 
 Add it to **every MCP client on your machine** in one command:
 
@@ -247,7 +251,7 @@ See [`docs/SLACK.md`](docs/SLACK.md#moving-from-local-to-production) for full st
 
 ### The app (`app/`)
 
-@context is a FastAPI application running the AgentOS runtime. [`app/main.py`](app/main.py) is the entrypoint and [`app/settings.py`](app/settings.py) holds shared settings. [`app/identity.py`](app/identity.py) is where identity is validated. It looks dense, but all it does is check whether `user_id` is in the `OWNER_ID` list (comma-separated). [`app/mcp.py`](app/mcp.py) is the always-on owner-only MCP server — one tool (`use_context`) that lets you read, act, and file through @context from the Claude/ChatGPT desktop apps and CLI clients (see [MCP server](#mcp-server)).
+@context is a FastAPI application running the AgentOS runtime. [`app/main.py`](app/main.py) is the entrypoint and [`app/settings.py`](app/settings.py) holds shared settings. [`app/identity.py`](app/identity.py) is where identity is validated. It looks dense, but all it does is check whether `user_id` is in the `OWNER_ID` list (comma-separated). [`app/mcp.py`](app/mcp.py) is the owner-only MCP server — one tool (`use_context`) that lets you read, act, and file through @context from the Claude/ChatGPT desktop apps and CLI clients (see [MCP server](#mcp-server)).
 
 ### The agents (`agents/`)
 

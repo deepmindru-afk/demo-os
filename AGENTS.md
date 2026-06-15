@@ -37,7 +37,7 @@ Context  (agents/context.py — one Agno agent, gpt-5.5)
 │
 ├── Skills (skills/ + agents/context.py)        owner-only playbooks  week-plan / daily-rundown / prep-for / process-today / research / knowledge-review
 │
-├── MCP server (app/mcp.py)                     always-on owner-only `use_context` at /mcp — read/act/file via Claude/ChatGPT desktop + CLI
+├── MCP server (app/mcp.py)                     owner-only `use_context` at /mcp (on by default) — read/act/file via Claude/ChatGPT desktop + CLI
 │
 └── Owner policy (agents/policy.py + app/identity.py)
     identity-conditioned toolset, pre-hook, tool-hook — all from a verified id
@@ -49,15 +49,15 @@ Shared:
 - Scheduler enabled by default (`scheduler=True`). Scheduled runs arrive with the verified identity `__scheduler__`, which `is_owner` treats as the owner (the scheduler is the owner's automation — see `docs/SECURITY.md`).
 - Slack interface is added automatically when both `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` are set, routed to `context` ([`docs/SLACK.md`](docs/SLACK.md)).
 - JWT auth on whenever `RUNTIME_ENV == "prd"`, with `user_isolation=True` (so production deploys are gated by default).
-- Owner-only MCP server (`use_context` at `/mcp`) is **always on** — the owner's read/act/file surface for the Claude/ChatGPT desktop apps and CLI clients (localhost; one `claude mcp add` / `codex mcp add` for the CLIs, a stdio bridge for the desktop apps), fail-closed (not a guest path). See [`docs/MCP.md`](docs/MCP.md).
+- Owner-only MCP server (`use_context` at `/mcp`), mounted by default — the owner's read/act/file surface for the Claude/ChatGPT desktop apps and CLI clients (localhost; one `claude mcp add` / `codex mcp add` for the CLIs, a stdio bridge for the desktop apps), fail-closed (not a guest path). See [`docs/MCP.md`](docs/MCP.md).
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| [`app/main.py`](app/main.py) | AgentOS entrypoint — lifespan (create tables + setup/close providers), conditional Slack, JWT gate, `OWNER_ID` warning, always-on owner-only MCP mount. |
+| [`app/main.py`](app/main.py) | AgentOS entrypoint — lifespan (create tables + setup/close providers), conditional Slack, JWT gate, `OWNER_ID` warning, owner-only MCP mount. |
 | [`app/identity.py`](app/identity.py) | `OWNER_ID` parsing + `is_owner(run_context)` — the verdict the whole owner/guest model keys off. Fails closed. |
-| [`app/mcp.py`](app/mcp.py) | The always-on owner-only MCP server — one tool (`use_context`) running the `context` agent as the owner; fail-closed `OwnerOnlyMiddleware` (JWT then owner check → 401) + DNS-rebinding protection, so it's never a guest path ([`docs/MCP.md`](docs/MCP.md)). |
+| [`app/mcp.py`](app/mcp.py) | The owner-only MCP server (mounted by default) — one tool (`use_context`) running the `context` agent as the owner; fail-closed `OwnerOnlyMiddleware` (JWT then owner check → 401) + DNS-rebinding protection, so it's never a guest path ([`docs/MCP.md`](docs/MCP.md)). |
 | [`app/settings.py`](app/settings.py) | `default_model()` factory. |
 | [`app/config.yaml`](app/config.yaml) | Quick prompts for the `context` agent. |
 | [`app/schedules.py`](app/schedules.py) | `register_schedules()` — the cron registration (idempotent; called from the lifespan): hourly `queue-reminders`, plus the Slack-gated `daily-digest` / `weekly-digest`. Cross-cutting (the scheduler can fire agents *or* workflows), so it lives here, not in `workflows/`. |
@@ -234,7 +234,7 @@ Token caches live at `gmail_token.json` / `calendar_token.json` (override with `
 
 ## MCP (owner-only read/act/file server)
 
-The MCP server is **always on** — [`app/main.py`](app/main.py) mounts it at `/mcp` unconditionally (it's not a setting to opt into). It exposes one tool, `use_context(message, session_id?)`, running the *real* `context` agent ([`app/mcp.py`](app/mcp.py)) as the **owner**. The point is the lowest-friction way in: [`scripts/connect.py`](scripts/connect.py) registers it with every local MCP client in one command — the **CLI clients (Claude Code, Codex)** via `claude mcp add` / `codex mcp add` (→ `http://localhost:8000/mcp`, no token in dev), the **desktop apps (Claude, ChatGPT)** via a small `mcp-remote` stdio bridge merged into `claude_desktop_config.json` — and the client then learns about @context and uses it without the owner prompting. Cloud clients (ChatGPT web, Claude web) can't reach localhost — deploy (connector URL `https://<your-domain>/mcp` + `Authorization: Bearer <JWT>`) or tunnel with ngrok, the same paths as Slack.
+The MCP server is mounted at `/mcp` by [`app/main.py`](app/main.py), on by default. It exposes one tool, `use_context(message, session_id?)`, running the *real* `context` agent ([`app/mcp.py`](app/mcp.py)) as the **owner**. The point is the lowest-friction way in: [`scripts/connect.py`](scripts/connect.py) registers it with every local MCP client in one command — the **CLI clients (Claude Code, Codex)** via `claude mcp add` / `codex mcp add` (→ `http://localhost:8000/mcp`, no token in dev), the **desktop apps (Claude, ChatGPT)** via a small `mcp-remote` stdio bridge merged into `claude_desktop_config.json` — and the client then learns about @context and uses it without the owner prompting. Cloud clients (ChatGPT web, Claude web) can't reach localhost — deploy (connector URL `https://<your-domain>/mcp` + `Authorization: Bearer <JWT>`) or tunnel with ngrok, the same paths as Slack.
 
 It's owner-only — **not** a guest path; teammates keep their Slack write path. Owner-only and fail-closed (see [`docs/SECURITY.md`](docs/SECURITY.md) L7): in prod the same JWT middleware AgentOS uses validates the token, then `OwnerOnlyMiddleware` 401s anyone not in `OWNER_ID` — it never falls back to the guest surface; an always-on local server is a DNS-rebinding target, so host validation is on (anchored on localhost + the `AGENTOS_URL` host, a non-allowed Host → 421). We run our own server (not AgentOS's `enable_mcp_server`) so identity is threaded through. The per-client setup steps (Claude Code, Codex, the desktop bridge, cloud) are in [`docs/MCP.md`](docs/MCP.md).
 

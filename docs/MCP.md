@@ -2,7 +2,7 @@
 
 `@context` exposes itself as an **MCP server** so you can use it from MCP clients — Claude Code, Codex, the Claude and ChatGPT desktop apps, and (once deployed) the web clients.
 
-It's **always on** — [`app/main.py`](../app/main.py) mounts it at `/mcp`, it's not a setting you opt into — and **owner-only**: it runs the agent as *you*, so never expose it without auth.
+It's **owner-only** and on by default — [`app/main.py`](../app/main.py) mounts it at `/mcp`. It runs the agent as *you*, so never expose it without auth.
 
 ## The tool
 
