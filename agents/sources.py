@@ -8,7 +8,7 @@ Each provider exposes at most two tools to the main agent — `query_<id>` and `
 
 `ACT_TOOLS` names the tools that act on the outside world *as the owner* (sending email, changing the calendar). `agents.context` flags them `requires_confirmation` so the run pauses for the owner's explicit approval before they execute — filing into your own store is frictionless; acting outward is gated (see `docs/SECURITY.md`).
 
-Slack messaging (`update_slack`) is deliberately **not** in `ACT_TOOLS`: posting a message — to a teammate, a channel, or another person's `@context` agent — is ordinary, low-stakes communication, so it runs ungated like a chat reply. The approval gate is reserved for the genuinely sensitive outward actions (sending mail as the owner, mutating the calendar). `update_slack` stays owner-only the same way every read/write tool does — it's added only in the owner branch of `context_tools`, so a guest never holds it.
+Slack messaging (`update_slack`) is deliberately **not** in `ACT_TOOLS`: posting a message — to a teammate, a channel, or another person's `@context` agent — is ordinary, low-stakes communication, so it runs ungated like a chat reply. The approval gate is reserved for the sensitive outward actions (sending mail as the owner, mutating the calendar). `update_slack` stays owner-only the same way every read/write tool does — it's added only in the owner branch of `context_tools`, so a guest never holds it.
 """
 
 import asyncio
@@ -156,7 +156,7 @@ def _create_agno_provider() -> MCPContextProvider:
 
 
 def _create_crm_provider() -> DatabaseContextProvider:
-    """The CRM — the structured database, read + write over the `context` schema.
+    """The CRM — the structured database, read + write over the `crm` schema.
 
     The tuned instructions know the managed table shape (projects/meetings/reminders/notes/contacts), rendered from the schema spec.
     """
@@ -209,15 +209,7 @@ def _create_knowledge_provider() -> WikiContextProvider:
 
 
 def _create_slack_provider() -> SlackContextProvider | None:
-    """Slack — read + write. `query_slack` reads channels/DMs; `update_slack` posts.
-
-    `write=True` (Agno's default, made explicit here) exposes `update_slack`, the
-    owner's send tool: post to a channel, reply in a thread, DM a teammate, or
-    @-mention another person's `@context` agent (which receives it through *their*
-    Slack interface and files it in their queue — the context network). It's
-    ungated on purpose — messaging is not in `ACT_TOOLS` — and owner-only by virtue
-    of riding the provider surface (a guest never gets it). See `docs/SLACK.md`.
-    """
+    """Slack — read + write. `query_slack` reads channels/DMs; `update_slack` posts."""
     if not getenv("SLACK_BOT_TOKEN"):
         return None
     return SlackContextProvider(model=default_model(), read=True, write=True)

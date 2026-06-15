@@ -90,7 +90,7 @@ Notes:
 
 ## @context Knowledge Base
 
-@context comes with a long-term knowledge base that acts as its second brain, and yours. @context stores everything from product specs and research notes to "what I know about X" pages in this knowledge base.
+@context comes with a long-term knowledge base that acts as its second brain. @context stores everything from product specs and research notes to "what I know about X" pages in this knowledge base.
 
 The knowledge base is configured as filesystem-backed by default (a gitignored `knowledge/` folder in this repo) but I highly recommend pointing it to a git repo or notion database for production. See [`docs/KNOWLEDGE.md`](docs/KNOWLEDGE.md) for the full guide.
 
@@ -111,7 +111,7 @@ The auto-managing crm is @context's superpower. Use it to manage projects, meeti
 - *"What reminders do I have coming up?"*
 - *"Tell me about Northwind."*
 
-@context's database lives in the `context` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest's can't see this data. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
+@context's database lives in the `crm` Postgres schema: writes are confined to that schema and every row is scoped to your `user_id`, so a guest's can't see this data. See [`docs/CRM.md`](docs/CRM.md) for the schema, the filing rules, and the write boundary.
 
 ## Run in production
 
@@ -232,6 +232,8 @@ Here are the runtime skills that are included in the repo:
 - [`skills/daily-rundown/SKILL.md`](skills/daily-rundown/SKILL.md).
 - [`skills/prep-for/SKILL.md`](skills/prep-for/SKILL.md).
 - [`skills/process-today/SKILL.md`](skills/process-today/SKILL.md).
+- [`skills/research/SKILL.md`](skills/research/SKILL.md).
+- [`skills/knowledge-review/SKILL.md`](skills/knowledge-review/SKILL.md).
 
 ## Connect Gmail and Calendar
 
