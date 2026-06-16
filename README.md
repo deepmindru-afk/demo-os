@@ -29,6 +29,10 @@ docker compose up -d --build
 docker exec -it demo-os-api python -m agents.dash.scripts.load_data
 docker exec -it demo-os-api python -m agents.dash.scripts.load_knowledge
 
+# Seed Clinic data (operational schedule DB + patient records)
+docker exec -it demo-os-api python -m teams.clinic.scripts.seed_clinic
+docker exec -it demo-os-api python -m teams.clinic.scripts.load_records
+
 # Seed demo eval data for the Evals page
 docker exec -it demo-os-api python -m evals.scripts.seed_eval_runs
 ```
@@ -61,6 +65,8 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | [**Dash**](agents/dash/) | coordinate | Self-learning data analyst (Analyst + Engineer) | Dual schema, write guard, read-only engine, LearningMachine |
 | [**Atlas**](teams/research/) | coordinate | Research team (Analyst + Investigator + Writer) | ParallelTools, Exa MCP, multi-specialist synthesis |
 | [**Chorus**](teams/investment/) | broadcast | Investment committee — 4 analysts assess a target in parallel | YFinanceTools, Exa MCP, LearningMachine |
+| [**Clinic**](teams/clinic/) | coordinate | Patient assistant — live schedule + patient-scoped records | Context provider (live DB), knowledge filtering, fallback models |
+| [**Mentor**](teams/coach/) | coordinate | Learning coach (Mentor + Curator) that gets better at helping you over time | LearningMachine (user profile, memory, session context, learned knowledge, decision log), followups |
 
 ### Workflows
 
@@ -71,6 +77,7 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | [**Press**](workflows/content_pipeline/) | On demand | Research + outline, then draft/review loop (max 3 iterations) | Workflow, Parallel, Loop, end condition |
 | [**Echo**](workflows/repo_walkthrough/) | On demand | Analyze code -> write script -> narrate with TTS | Workflow, CodingTools, ElevenLabsTools, cross-modal chaining |
 | [**Beacon**](workflows/support_triage/) | On demand | Classify tickets, route to specialist, escalate if critical | Workflow, Router, Condition, escalation |
+| [**Support Bot**](workflows/support_bot/) | On demand | Take an error, collect environment via step-level HITL, search docs/web/GitHub for a fix | Workflow, step-level HITL (user input), HITL output review, MCP + web search |
 
 ### Feature Coverage
 
@@ -90,7 +97,10 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Structured output (Pydantic) | Quill |
 | File generation (HTML) | Quill |
 | Web research (Exa: search, company, crawl, fetch) | Quill |
-| Learning (LearningMachine) | Dash, Investment |
+| Learning (LearningMachine) | Dash, Investment, Mentor |
+| Learning — user profile + memory | Mentor |
+| Learning — session context | Mentor |
+| Learning — decision log | Mentor |
 | SQL tools | Dash |
 | Coding tools | Echo |
 | Image generation (DALL-E) | Iris |
@@ -100,12 +110,18 @@ Confirm the system is running at [http://localhost:8000/docs](http://localhost:8
 | Multi-model (Gemini) | Investment |
 | YFinance tools | Investment |
 | Session state + agentic state | Pilot |
-| Team — coordinate | Dash, Atlas |
+| Team — coordinate | Dash, Atlas, Mentor |
 | Team — broadcast | Chorus |
+| Context provider (live DB) | Clinic |
+| Knowledge filtering (per-patient) | Clinic |
+| Followups (suggested questions) | Mentor |
+| Fallback models | Clinic |
 | Workflow — parallel | Dawn, Pulse, Press |
 | Workflow — loop | Press |
 | Workflow — router | Beacon |
 | Workflow — condition | Beacon |
+| Workflow — step-level HITL (user input) | Support Bot |
+| Workflow — HITL output review | Support Bot |
 | Scheduling (cron) | Dawn, Pulse |
 | Parallel execution | Dawn, Pulse, Press |
 | Cross-modal chaining | Echo |

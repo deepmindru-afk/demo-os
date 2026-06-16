@@ -26,6 +26,8 @@ from app.settings import RUNTIME_ENV, SCHEDULER_BASE_URL, SLACK_SIGNING_SECRET, 
 from frameworks.claude_repo import claude_repo
 from frameworks.dspy_math import dspy_math
 from frameworks.langgraph_debate import langgraph_debate
+from teams.clinic import clinic, clinic_knowledge
+from teams.coach import coach_learnings, coach_team
 from teams.investment import (
     investment_broadcast,
     investment_knowledge,
@@ -36,6 +38,7 @@ from workflows.ai_research import ai_research
 from workflows.content_pipeline import content_pipeline
 from workflows.morning_brief import morning_brief
 from workflows.repo_walkthrough import repo_walkthrough
+from workflows.support_bot import support_bot
 from workflows.support_triage import support_triage
 
 # ---------------------------------------------------------------------------
@@ -90,8 +93,10 @@ agent_os = AgentOS(
     ],
     teams=[
         dash,
-        research_coordinate,
+        coach_team,
+        clinic,
         investment_broadcast,
+        research_coordinate,
     ],
     workflows=[
         morning_brief,
@@ -99,12 +104,15 @@ agent_os = AgentOS(
         content_pipeline,
         repo_walkthrough,
         support_triage,
+        support_bot,
     ],
     knowledge=[
         dash_knowledge,
         dash_learnings,
         investment_knowledge,
         investment_learnings,
+        clinic_knowledge,
+        coach_learnings,
     ],
     interfaces=interfaces,
     registry=registry,

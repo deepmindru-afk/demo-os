@@ -66,13 +66,19 @@ ENTITIES: dict[str, Entity] = {
         definition_file="agents/taskboard/agent.py",
     ),
     # -------------------------------------------------------------------------
-    # Teams (6)
+    # Teams
     # -------------------------------------------------------------------------
     "dash": Entity(
         id="dash",
         type="team",
         instruction_file="agents/dash/instructions.py",
         definition_file="agents/dash/team.py",
+    ),
+    "clinic": Entity(
+        id="clinic",
+        type="team",
+        instruction_file="teams/clinic/instructions.py",
+        definition_file="teams/clinic/team.py",
     ),
     "atlas": Entity(
         id="atlas",
@@ -121,6 +127,12 @@ ENTITIES: dict[str, Entity] = {
         type="workflow",
         instruction_file="workflows/support_triage/instructions.py",
         definition_file="workflows/support_triage/workflow.py",
+    ),
+    "support-bot": Entity(
+        id="support-bot",
+        type="workflow",
+        instruction_file="workflows/support_bot/instructions.py",
+        definition_file="workflows/support_bot/workflow.py",
     ),
 }
 

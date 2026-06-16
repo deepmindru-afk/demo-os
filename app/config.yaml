@@ -93,6 +93,14 @@ manifest:
       - "All analysts: assess NVDA for our portfolio"
       - "Committee vote: should we invest in META?"
 
+  clinic:
+    description: "Patient assistant — live clinic schedule with patient-scoped records."
+    labels: ["context-provider", "knowledge-filter", "fallback"]
+    quick_prompts:
+      - "When is my next appointment?"
+      - "What did my recent bloodwork show?"
+      - "Is Dr. Lee free on Thursday, and is Ozempic covered?"
+
   atlas:
     description: "Research team in coordinate mode — analyst, investigator, and writer produce a report."
     labels: ["coordinate", "research", "analysis"]
@@ -100,6 +108,14 @@ manifest:
       - "Size the AI agent platform market and its growth rate"
       - "Profile the top 3 AI agent startups: funding, team, and strategy"
       - "Write a competitive analysis report on the AI agent framework market"
+
+  mentor:
+    description: "Learning-focused coach that gets better at helping you over time — profile, memories, session context, learned playbooks, and decision log via the LearningMachine."
+    labels: ["learning-machine", "memory", "session-context", "followups"]
+    quick_prompts:
+      - "I'm a backend engineer new to Rust. I prefer concise, example-first answers. Where should I start?"
+      - "We decided to use Postgres over SQLite for the new service — remember that and the reasoning."
+      - "Based on what you know about me, suggest my next learning goal."
 
   # --- Workflows ---
 
@@ -142,3 +158,11 @@ manifest:
       - "I can't log into my account, it says my password is wrong"
       - "I was charged twice for my subscription last month"
       - "The API is returning 500 errors when I try to upload files larger than 10MB"
+
+  support-bot:
+    description: "Agno troubleshooting bot — collects your environment via step-level HITL, then searches docs, web, and GitHub for a fix."
+    labels: ["hitl", "user-input", "support", "workflow"]
+    quick_prompts:
+      - "ModuleNotFoundError: No module named 'agno.workflow.types'"
+      - "My Agent ignores requires_confirmation and never pauses for HITL"
+      - "TypeError: Knowledge.search() got an unexpected keyword argument 'limit'"

@@ -4,7 +4,7 @@ This file provides context for Claude Code when working with this repository.
 
 ## Project Overview
 
-AgentOS - A multi-agent demo system built by Agno showcasing Agno framework features (6 agents, 3 teams, 5 workflows, 3 multi-framework agents).
+AgentOS - A multi-agent demo system built by Agno showcasing Agno framework features (6 agents, 4 teams, 6 workflows, 3 multi-framework agents).
 
 ## Architecture
 
@@ -21,16 +21,19 @@ AgentOS (app/main.py)
 │   ├── Probe (frameworks/claude_repo/)                 # Claude Agent SDK — explains GitHub repos
 │   ├── Forum (frameworks/langgraph_debate/)                # LangGraph — parallel Pro/Con + Judge
 │   └── Abacus (frameworks/dspy_math/)                      # DSPy — ChainOfThought word problems
-├── Teams (3)
+├── Teams (4)
 │   ├── Dash (agents/dash/)                                      # Data analyst (team, coordinate)
 │   ├── Atlas (teams/research/)                    # Research team (coordinate mode)
-│   └── Chorus (teams/investment/)                 # Investment committee (broadcast mode)
-└── Workflows (5)
+│   ├── Chorus (teams/investment/)                 # Investment committee (broadcast mode)
+│   ├── Clinic (teams/clinic/)                     # Patient assistant (context provider + filtered records)
+│   └── Mentor (teams/coach/)                      # Learning coach (LearningMachine: profile, memory, session context, knowledge, decisions; followups)
+└── Workflows (6)
     ├── Dawn (workflows/morning_brief/)                 # Daily parallel briefing
     ├── Pulse (workflows/ai_research/)                     # Daily parallel AI research
     ├── Press (workflows/content_pipeline/)           # Parallel + loop + condition
     ├── Echo (workflows/repo_walkthrough/)                 # Code → script → narrated audio
-    └── Beacon (workflows/support_triage/)               # Router + condition + escalation
+    ├── Beacon (workflows/support_triage/)               # Router + condition + escalation
+    └── Support Bot (workflows/support_bot/)             # Step-level HITL troubleshooting
 ```
 
 All agents share:
@@ -59,11 +62,14 @@ All agents share:
 | `agents/dash/team.py` | Dash team (Analyst, Engineer) |
 | `teams/research/team.py` | Atlas (coordinate mode) |
 | `teams/investment/team.py` | Chorus — investment committee (broadcast mode, 4 analysts, YFinance) |
+| `teams/clinic/team.py` | Clinic — patient assistant (context provider + filtered records, fallback) |
+| `teams/coach/team.py` | Mentor — learning coach (LearningMachine: user profile, memory, session context, learned knowledge, decision log; followups) |
 | `workflows/morning_brief/workflow.py` | Dawn (parallel gather → synthesize) |
 | `workflows/ai_research/workflow.py` | Pulse (4 parallel researchers → synthesize) |
 | `workflows/content_pipeline/workflow.py` | Press (router, parallel, loop, HITL) |
 | `workflows/repo_walkthrough/workflow.py` | Echo (analyze → script → narrate) |
 | `workflows/support_triage/workflow.py` | Beacon (classify → route → escalate) |
+| `workflows/support_bot/workflow.py` | Support Bot (capture error → step-level HITL env → search docs/web/GitHub) |
 | `db/session.py` | `get_postgres_db()` and `create_knowledge()` helpers |
 | `db/url.py` | Builds database URL from environment |
 | `compose.yaml` | Local development with Docker |
@@ -290,6 +296,8 @@ from agents.taskboard import taskboard
 from agents.dash import dash
 from teams.research import research_coordinate
 from teams.investment import investment_broadcast
+from teams.clinic import clinic
+from teams.coach import coach_team
 
 # Workflows
 from workflows.morning_brief import morning_brief
@@ -297,6 +305,7 @@ from workflows.ai_research import ai_research
 from workflows.content_pipeline import content_pipeline
 from workflows.repo_walkthrough import repo_walkthrough
 from workflows.support_triage import support_triage
+from workflows.support_bot import support_bot
 ```
 
 ## Adding a New Agent
@@ -325,6 +334,10 @@ docker compose up -d --build
 
 # Load knowledge for Dash
 python -m agents.dash.scripts.load_knowledge
+
+# Seed the Clinic team data (operational DB + patient records)
+python -m teams.clinic.scripts.seed_clinic
+python -m teams.clinic.scripts.load_records
 
 # Format & validation (run from activated venv)
 ./scripts/format.sh
@@ -430,7 +443,11 @@ Optional (tools & integrations):
 | Structured output (Pydantic) | Quill |
 | File generation (HTML) | Quill |
 | Web research (Exa: search, company, crawl, fetch) | Quill |
-| Learning (LearningMachine) | Dash, Investment |
+| Learning (LearningMachine) | Dash, Investment, Mentor |
+| Learning — user profile + memory | Mentor |
+| Learning — session context | Mentor |
+| Learning — learned knowledge (playbooks) | Mentor, Dash, Investment |
+| Learning — decision log | Mentor |
 | SQL tools | Dash |
 | Coding tools | Echo |
 | Image generation (DALL-E) | Iris |
@@ -442,12 +459,18 @@ Optional (tools & integrations):
 | YFinance tools | Investment |
 | Team — coordinate | Dash, Atlas |
 | Team — broadcast | Chorus |
+| Context provider (live DB) | Clinic |
+| Knowledge filtering (per-patient) | Clinic |
+| Followups (suggested questions) | Mentor |
+| Fallback models | Clinic |
 | Workflow — parallel | Dawn, Pulse, Press |
 | Workflow — loop | Press |
 | Scheduling (cron) | Dawn, Pulse |
 | Parallel execution | Dawn, Pulse, Press |
 | Workflow — router | Beacon |
 | Workflow — condition | Beacon |
+| Workflow — step-level HITL (user input) | Support Bot |
+| Workflow — HITL output review | Support Bot |
 | Session state + agentic state | Pilot |
 | Cross-modal chaining | Echo |
 
